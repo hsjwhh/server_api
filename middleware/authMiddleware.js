@@ -15,6 +15,8 @@
  */
 
 const jwt = require('jsonwebtoken')
+// 全局路由错误信息
+const { AuthError } = require('../utils/errors.js')
 
 /**
  * 鉴权中间件
