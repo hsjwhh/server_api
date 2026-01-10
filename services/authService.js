@@ -33,7 +33,7 @@ const { AuthError } = require('../utils/errors')
  */
 function generateAccessToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '15m' // 15 分钟有效期
+    expiresIn: process.env.JWT_EXPIRES_IN || '15m' // 15 分钟有效期
   })
 }
 
@@ -44,7 +44,7 @@ function generateAccessToken(payload) {
  */
 function generateRefreshToken(payload) {
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: '7d' // 7 天有效期
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' // 7 天有效期
   })
 }
 
