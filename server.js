@@ -24,6 +24,9 @@ const authRoutes = require('./routes/authRoutes')
 // 路由：SN 查询（受保护）
 const snRouter = require("./routes/sn")
 
+// 路由：硬件查询（受保护）
+const hwRouter = require("./routes/hwRoutes")
+
 // 全局路由错误信息
 const { AppError } = require('./utils/errors')
 
@@ -58,15 +61,17 @@ app.use(express.json())
 app.use('/api/auth', authRoutes)
 
 /**
- * SN 查询路由（需要登录）
+ * SN/HW 查询路由（需要登录）
  * 
  * 访问路径：
  *   GET /api/sn/xxxx
+ *   GET /api/cpu/xxxx
  * 
  * authMiddleware 会验证 accessToken 是否有效
  * 验证通过后才会进入 snRouter
  */
 app.use("/api/sn", authMiddleware, snRouter)
+app.use("/api/hw/cpu", authMiddleware, hwRouter)
 
 /* 全局错误处理中间件（必须放在所有路由之后）
 作用：统一捕获后端抛出的所有错误，并返回结构化的 JSON 给前端 */
