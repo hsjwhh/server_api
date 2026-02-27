@@ -22,7 +22,7 @@ const authMiddleware = require('./middleware/authMiddleware')
 const authRoutes = require('./routes/authRoutes')
 
 // 路由：SN 查询（受保护）
-const snRouter = require("./routes/sn")
+const snRouter = require("./routes/snRoutes")
 
 // 路由：硬件查询（受保护）
 const hwRouter = require("./routes/hwRoutes")
