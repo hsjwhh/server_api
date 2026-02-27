@@ -56,3 +56,35 @@ exports.getSnDetail = async (req, res) => {
         });
     }
 };
+
+// SN 详情
+exports.getMbByCpu = async (req, res) => {
+    const cpu = req.params.cpu;
+
+    // 参数校验
+    if (!cpu) {
+        return res.status(400).json({
+            message: "CPU is required"
+        });
+    }
+
+    try {
+        const data = await snService.getMbByCpu(cpu);
+
+        // 未找到 CPU 对应的主板型号
+        if (!data) {
+            return res.status(404).json({
+                message: "CPU 对应的主板型号未找到"
+            });
+        }
+
+        // 成功 → 直接返回 主板 数据对象
+        res.json(data);
+
+    } catch (err) {
+        console.error("主板型号 查询错误：", err);
+        res.status(500).json({
+            message: "服务器错误"
+        });
+    }
+};

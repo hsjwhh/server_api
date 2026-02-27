@@ -34,4 +34,13 @@ router.get('/', snController.searchSn)
  */
 router.get('/:sn', snController.getSnDetail)
 
+/**
+ * GET /api/sn/cpu2mb/E5-2620
+ *
+ * 根据 CPU 搜索对应的主板型号（去重）
+ * 请求示例：
+ *   /api/sn/cpu2mb/E5-2620
+ */
+router.get('/cpu2mb/:cpu', snController.getMbByCpu)
+
 module.exports = router

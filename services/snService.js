@@ -19,3 +19,12 @@ exports.getDetail = async (sn) => {
     );
     return rows[0] || null;
 };
+
+// 搜索 CPU 对应的主板型号（去重）
+exports.getMbByCpu = async (cpu) => {
+    const rows = await query(
+        "SELECT DISTINCT `主板` FROM server_info WHERE CPU = ? LIMIT 20",
+        [cpu]
+    );
+    return rows;
+};
