@@ -71,7 +71,7 @@ app.use('/api/auth', authRoutes)
  * 验证通过后才会进入 snRouter
  */
 app.use("/api/sn", authMiddleware, snRouter)
-app.use("/api/hw/cpu", authMiddleware, hwRouter)
+app.use("/api/hw", authMiddleware, hwRouter)
 
 /* 全局错误处理中间件（必须放在所有路由之后）
 作用：统一捕获后端抛出的所有错误，并返回结构化的 JSON 给前端 */

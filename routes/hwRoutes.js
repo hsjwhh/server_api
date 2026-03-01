@@ -26,7 +26,7 @@ const hwController = require('../controllers/hwController')
  * 请求示例：
  *   /api/hw/cpu?keyword=R730
  */
-router.get('/', hwController.searchCpu)
+router.get('/cpu', hwController.searchCpu)
 
 /**
  * GET /api/hw/cpu/:id
@@ -35,6 +35,15 @@ router.get('/', hwController.searchCpu)
  * 请求示例：
  *   /api/hw/cpu/R730-001
  */
-router.get('/:id', hwController.getCpuDetail)
+router.get('/cpu/:id', hwController.getCpuDetail)
+
+/**
+ * GET /api/hw/mb/:socket
+ *
+ * 主板搜索接口（根据 CPU socket）
+ * 请求示例：
+ *   /api/hw/mb/LGA1151
+ */
+router.get('/mb/:socket', hwController.getMbBySocket)
 
 module.exports = router

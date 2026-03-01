@@ -56,3 +56,35 @@ exports.getCpuDetail = async (req, res) => {
         });
     }
 };
+
+// Motherboard 搜索
+exports.getMbBySocket = async (req, res) => {
+    const socket = req.params.socket; // URL 参数：/mb/:socket
+
+    // 参数校验
+    if (!socket) {
+        return res.status(400).json({
+            message: "Socket is required"
+        });
+    }
+
+    try {
+        const data = await hwService.getMbBySocket(socket);
+
+        // 未找到 MB
+        if (!data) {
+            return res.status(404).json({
+                message: "Motherboard not found!"
+            });
+        }
+
+        // 成功 → 直接返回 MB 数据对象
+        res.json(data);
+
+    } catch (err) {
+        console.error("Motherboard 查询错误：", err);
+        res.status(500).json({
+            message: "服务器错误"
+        });
+    }
+};

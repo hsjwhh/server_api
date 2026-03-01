@@ -14,8 +14,17 @@ exports.getCpuName = async (keyword) => {
 // ✅ 根据 CPU id 获取详情
 exports.getCpuDetail = async (id) => {
     const rows = await query(
-        "SELECT * FROM cpu_info WHERE id = ? LIMIT 1",
+        "SELECT * FROM cpu_info WHERE id = ?",
         [id]
     );
-    return rows[0] || null;
+    return rows[0] ?? null;
+};
+
+// ✅ 根据 CPU socket 获取主板列表
+exports.getMbBySocket = async (socket) => {
+    const rows = await query(
+        "SELECT * FROM mb_info WHERE sockets = ? LIMIT 20",
+        [socket]
+    );
+    return rows;
 };

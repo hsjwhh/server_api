@@ -57,7 +57,7 @@ exports.getSnDetail = async (req, res) => {
     }
 };
 
-// SN 详情
+// 从 rawdata 表中查询 CPU 对应的主板型号
 exports.getMbByCpu = async (req, res) => {
     const cpu = req.params.cpu;
 
