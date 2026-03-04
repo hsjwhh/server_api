@@ -136,7 +136,7 @@ async function refreshAccessToken(refreshToken) {
       process.env.JWT_REFRESH_SECRET,
       (err, decodedUser) => {
         if (err) {
-          new AuthError('refresh token 无效或已过期', 'AUTH_REFRESH_TOKEN_EXPIRED')
+          return reject(new AuthError('refresh token 无效或已过期', 'AUTH_REFRESH_TOKEN_EXPIRED'))
         }
 
         // decodedUser = { id, username, role, iat, exp }
