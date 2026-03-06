@@ -16,46 +16,62 @@
 
 const express = require('express')
 const router = express.Router()
+const rateLimit = require('express-rate-limit')
 
-// 引入控制器（真正的业务逻辑在 controller 中）
 const authController = require('../controllers/authController')
+
+/**
+ * 限流配置
+ *
+ * loginLimiter:   防暴力破解 —— 15 分钟内同一 IP 最多 10 次登录请求
+ * refreshLimiter: 防滥刷 token —— 15 分钟内同一 IP 最多 30 次刷新请求
+ */
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,  // 15 分钟窗口
+    max: 10,                    // 最多 10 次
+    standardHeaders: true,      // 返回 RateLimit-* 响应头
+    legacyHeaders: false,
+    message: {
+        code: 'TOO_MANY_REQUESTS',
+        message: '登录尝试过于频繁，请 15 分钟后再试'
+    }
+})
+
+const refreshLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        code: 'TOO_MANY_REQUESTS',
+        message: '请求过于频繁，请稍后再试'
+    }
+})
 
 /**
  * POST /api/auth/login
  *
  * 登录接口：
  *   - 请求体：{ username, password }
- *   - 返回：{ user, accessToken, refreshToken }
- *
- * 说明：
- *   - 登录不需要 authMiddleware，因为用户还没有 token
+ *   - 返回：{ user, accessToken }（refreshToken 通过 HttpOnly Cookie 下发）
  */
-router.post('/login', authController.login)
+router.post('/login', loginLimiter, authController.login)
 
 /**
  * POST /api/auth/refresh
  *
  * 刷新 accessToken：
- *   - 请求体：{ refreshToken }
+ *   - refreshToken 通过 HttpOnly Cookie 自动携带
  *   - 返回：{ accessToken }
- *
- * 说明：
- *   - refreshToken 是长期有效的
- *   - accessToken 过期后，前端会自动调用此接口
- *   - 不需要 authMiddleware，因为 accessToken 已经过期
  */
-router.post('/refresh', authController.refresh)
+router.post('/refresh', refreshLimiter, authController.refresh)
 
 /**
  * POST /api/auth/logout
  *
  * 登出接口：
- *   - 请求体：{ refreshToken }
+ *   - 清除 HttpOnly Cookie
  *   - 返回：{ message: '已登出' }
- *
- * 说明：
- *   - 后端会把 refreshToken 从存储中删除
- *   - 这样用户就无法再刷新 token，相当于彻底退出
  */
 router.post('/logout', authController.logout)
 

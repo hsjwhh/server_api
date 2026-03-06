@@ -26,21 +26,23 @@ const snController = require('../controllers/snController')
 router.get('/', snController.searchSn)
 
 /**
+ * GET /api/sn/cpu2mb/:cpu
+ *
+ * 根据 CPU 型号查询对应主板型号（去重）
+ * 请求示例：
+ *   /api/sn/cpu2mb/E5-2620
+ *
+ * 注意：必须定义在 GET /：sn 之前，否则 Express 会先匹配通配路由
+ */
+router.get('/cpu2mb/:cpu', snController.getMbByCpu)
+
+/**
  * GET /api/sn/:sn
  *
- * SN 详情查询接口
+ * SN 详情查询接口（通配兼容，必须放在最后）
  * 请求示例：
  *   /api/sn/R730-001
  */
 router.get('/:sn', snController.getSnDetail)
-
-/**
- * GET /api/sn/cpu2mb/E5-2620
- *
- * 根据 CPU 搜索对应的主板型号（去重）
- * 请求示例：
- *   /api/sn/cpu2mb/E5-2620
- */
-router.get('/cpu2mb/:cpu', snController.getMbByCpu)
 
 module.exports = router

@@ -77,32 +77,41 @@ async function login(username, password) {
   // 1. 从数据库查询用户
   const user = await userService.findUserByUsername(username)
 
+  // 用户不存在时，仍执行一次 bcrypt.compare（dummy）
+  // 目的：防止攻击者通过响应时间差判断用户是否存在（时序一致性防为主）
   if (!user) {
-    throw new AuthError('用户不存在', 'AUTH_USER_NOT_FOUND')
+    await bcrypt.compare(password, '$2b$10$dummyhashfortiminggxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
   }
 
-  // 2. 校验密码（bcrypt 对比明文密码 vs 哈希）
+  // 2. 用户存在但已禁用
+  if (user.status !== 'active') {
+    // 同样不透露是哪个原因，延迟后再抛出（时序一致）
+    await bcrypt.compare(password, '$2b$10$dummyhashfortiminggxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
+  }
+
+  // 3. 校验密码（bcrypt 对比明文密码 vs 哈希）
   const isMatch = await bcrypt.compare(password, user.password_hash)
 
   if (!isMatch) {
     throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
   }
 
-  // 3. 构造写入 token 的 payload（不要包含密码）
+  // 4. 构造写入 token 的 payload（不要包含密码）
   const payload = {
     id: user.id,
     username: user.username,
     role: user.role
   }
 
-  // 4. 生成 token
+  // 5. 生成 token
   const accessToken = generateAccessToken(payload)
   const refreshToken = generateRefreshToken(payload)
 
-  // 5. 存储 refreshToken（未来会改成数据库）
+  // 6. 存储 refreshToken（未来会改成数据库）
   refreshTokensStore.push(refreshToken)
 
-  // 6. 返回给 controller
   return {
     user: payload,
     accessToken,
@@ -119,42 +128,42 @@ async function login(username, password) {
  * @returns {object} { accessToken }
  */
 async function refreshAccessToken(refreshToken) {
-  // 1. 是否提供 refreshToken
   if (!refreshToken) {
     throw new AuthError('缺少 refresh token', 'AUTH_REFRESH_TOKEN_MISSING')
   }
 
-  // 2. refreshToken 是否存在于服务器记录中
   if (!refreshTokensStore.includes(refreshToken)) {
     throw new AuthError('refresh token 无效或已登出', 'AUTH_REFRESH_TOKEN_INVALID')
   }
 
-  // 3. 验证 refreshToken 是否有效
-  return new Promise((resolve, reject) => {
-    jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET,
-      (err, decodedUser) => {
-        if (err) {
-          return reject(new AuthError('refresh token 无效或已过期', 'AUTH_REFRESH_TOKEN_EXPIRED'))
-        }
-
-        // decodedUser = { id, username, role, iat, exp }
-        const payload = {
-          id: decodedUser.id,
-          username: decodedUser.username,
-          role: decodedUser.role
-        }
-
-        // 生成新的 accessToken
-        const newAccessToken = generateAccessToken(payload)
-
-        resolve({
-          accessToken: newAccessToken
-        })
+  // 异步化 jwt.verify
+  const decodedUser = await new Promise((resolve, reject) => {
+    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+      if (err) {
+        return reject(new AuthError('refresh token 无效或已过期', 'AUTH_REFRESH_TOKEN_EXPIRED'))
       }
-    )
+      resolve(decoded)
+    })
   })
+
+  // 补一次数据库查询，确认用户状态仍然有效
+  // （封号、删除用户后防止用旧 refreshToken 继续获取 accessToken）
+  const currentUser = await userService.findUserByUsername(decodedUser.username)
+  if (!currentUser || currentUser.status !== 'active') {
+    // token 仍在内存列表中，主动撤销
+    refreshTokensStore = refreshTokensStore.filter(t => t !== refreshToken)
+    throw new AuthError('账号已停用，请重新登录', 'AUTH_USER_DISABLED')
+  }
+
+  const payload = {
+    id: currentUser.id,
+    username: currentUser.username,
+    role: currentUser.role
+  }
+
+  const newAccessToken = generateAccessToken(payload)
+
+  return { accessToken: newAccessToken }
 }
 
 /**
