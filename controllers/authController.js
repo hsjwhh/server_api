@@ -6,37 +6,47 @@
  *   - 调用 service 层处理业务逻辑
  *   - 统一返回响应（成功或错误）
  *
- * 注意：
- *   - Controller 不写任何业务逻辑
- *   - 不生成 token、不查数据库、不做权限判断
- *   - 所有业务逻辑都放在 service 层（authService.js）
+ * 安全策略：
+ *   - refreshToken 通过 HttpOnly Cookie 下发，JS 无法读写（防 XSS）
+ *   - accessToken 短期有效，前端保存在内存中（不写 localStorage）
  */
 
 const authService = require('../services/authService')
+
+// Cookie 配置（统一管理）
+const REFRESH_TOKEN_COOKIE = 'refreshToken'
+const COOKIE_OPTIONS = {
+  httpOnly: true,                                          // JS 无法读取，防 XSS
+  secure: process.env.NODE_ENV === 'production',           // 仅生产 HTTPS 开启，本地 HTTP 测试时 false
+  sameSite: 'Lax',                                         // 防 CSRF（同站请求允许，跨站 POST 拒绝）
+  maxAge: 7 * 24 * 60 * 60 * 1000,                        // 7 天（毫秒）
+  path: '/'
+}
 
 /**
  * 登录接口
  * POST /api/auth/login
  *
- * 请求体：
- *   { username, password }
+ * 请求体：{ username, password }
  *
  * 返回：
- *   {
- *     user: { id, username, role },
- *     accessToken: "...",
- *     refreshToken: "..."
- *   }
+ *   - Cookie: refreshToken（HttpOnly）
+ *   - Body: { user, accessToken }
  */
 async function login(req, res, next) {
   try {
     const { username, password } = req.body
 
-    // 调用 service 层处理登录逻辑
     const result = await authService.login(username, password)
 
-    // 登录成功，返回用户信息 + token
-    res.json(result)
+    // refreshToken → HttpOnly Cookie（JS 不可见）
+    res.cookie(REFRESH_TOKEN_COOKIE, result.refreshToken, COOKIE_OPTIONS)
+
+    // accessToken → Body（前端保存在内存中）
+    res.json({
+      user: result.user,
+      accessToken: result.accessToken
+    })
 
   } catch (error) {
     next(error)
@@ -47,21 +57,22 @@ async function login(req, res, next) {
  * 刷新 accessToken
  * POST /api/auth/refresh
  *
- * 请求体：
- *   { refreshToken }
+ * refreshToken 由浏览器自动携带（Cookie），无需在 Body 中传递
  *
- * 返回：
- *   { accessToken }
- *
- * 用途：
- *   - accessToken 过期后，前端自动调用此接口
- *   - refreshToken 长期有效，用于换取新的 accessToken
+ * 返回：{ accessToken }
  */
 async function refresh(req, res, next) {
   try {
-    const { refreshToken } = req.body
+    // 从 Cookie 读取，而非 req.body
+    const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE]
 
-    // 调用 service 层生成新的 accessToken
+    if (!refreshToken) {
+      return res.status(401).json({
+        code: 'NO_REFRESH_TOKEN',
+        message: '未找到刷新令牌，请重新登录'
+      })
+    }
+
     const result = await authService.refreshAccessToken(refreshToken)
 
     res.json(result)
@@ -75,21 +86,19 @@ async function refresh(req, res, next) {
  * 登出接口
  * POST /api/auth/logout
  *
- * 请求体：
- *   { refreshToken }
- *
- * 返回：
- *   { message: '已登出' }
- *
- * 用途：
- *   - 删除 refreshToken，使其无法再刷新 accessToken
- *   - 相当于彻底退出登录
+ * 清除 HttpOnly Cookie + 后端吊销 refreshToken
  */
 async function logout(req, res, next) {
   try {
-    const { refreshToken } = req.body
+    const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE]
 
-    await authService.logout(refreshToken)
+    // 即使没有 token 也清除 Cookie，保证登出成功
+    if (refreshToken) {
+      await authService.logout(refreshToken).catch(() => { })
+    }
+
+    // 清除 Cookie
+    res.clearCookie(REFRESH_TOKEN_COOKIE, { path: '/' })
 
     res.json({ message: '已登出' })
 
