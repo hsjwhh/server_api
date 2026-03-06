@@ -84,8 +84,8 @@ async function login(username, password) {
     throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
   }
 
-  // 2. 用户存在但已禁用
-  if (user.status !== 'active') {
+  // 2. 用户存在但已禁用 (状态 1 表示正常，0 表示禁用)
+  if (user.status !== 1) {
     // 同样不透露是哪个原因，延迟后再抛出（时序一致）
     await bcrypt.compare(password, '$2b$10$dummyhashfortiminggxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
@@ -149,7 +149,7 @@ async function refreshAccessToken(refreshToken) {
   // 补一次数据库查询，确认用户状态仍然有效
   // （封号、删除用户后防止用旧 refreshToken 继续获取 accessToken）
   const currentUser = await userService.findUserByUsername(decodedUser.username)
-  if (!currentUser || currentUser.status !== 'active') {
+  if (!currentUser || currentUser.status !== 1) {
     // token 仍在内存列表中，主动撤销
     refreshTokensStore = refreshTokensStore.filter(t => t !== refreshToken)
     throw new AuthError('账号已停用，请重新登录', 'AUTH_USER_DISABLED')
