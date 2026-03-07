@@ -12,15 +12,22 @@
  */
 
 const authService = require('../services/authService')
+// Cookie 策略也统一从配置中心读取，避免控制器里出现环境判断分支。
+const config = require('../config')
 
 // Cookie 配置（统一管理）
 const REFRESH_TOKEN_COOKIE = 'refreshToken'
 const COOKIE_OPTIONS = {
   httpOnly: true,                                          // JS 无法读取，防 XSS
-  secure: process.env.NODE_ENV === 'production',           // 仅生产 HTTPS 开启，本地 HTTP 测试时 false
-  sameSite: 'Lax',                                         // 防 CSRF（同站请求允许，跨站 POST 拒绝）
-  maxAge: 7 * 24 * 60 * 60 * 1000,                        // 7 天（毫秒）
+  secure: config.cookie.secure,
+  sameSite: config.cookie.sameSite,
+  maxAge: config.cookie.maxAge,
   path: '/'
+}
+
+// 只有在显式配置了域名时才写入 domain，避免本地开发时因为 domain 不匹配导致 Cookie 不生效。
+if (config.cookie.domain) {
+  COOKIE_OPTIONS.domain = config.cookie.domain
 }
 
 /**

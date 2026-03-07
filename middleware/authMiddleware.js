@@ -17,6 +17,8 @@
 const jwt = require('jsonwebtoken')
 // 全局路由错误信息
 const { AuthError } = require('../utils/errors.js')
+// 中间件层不直接碰 `process.env`，统一从配置中心拿鉴权参数。
+const config = require('../config')
 
 /**
  * 鉴权中间件
@@ -58,8 +60,11 @@ function authMiddleware(req, res, next) {
    * jwt.verify 会自动检查：
    *   - token 是否被篡改
    *   - token 是否过期
+   *
+   * 这里统一读取 `config.auth.jwtSecret`，这样启动阶段如果 secret 缺失，
+   * 服务会直接失败，而不是等到第一条受保护请求才报错。
    */
-  jwt.verify(token, process.env.JWT_SECRET, (err, decodedUser) => {
+  jwt.verify(token, config.auth.jwtSecret, (err, decodedUser) => {
     if (err) {
       // token 无效或已过期
       return next(new AuthError('token 无效或已过期', 'AUTH_TOKEN_INVALID'))

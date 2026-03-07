@@ -1,19 +1,8 @@
-/**
- * server.js
- * 
- * 后端入口文件：
- *   - 加载环境变量
- *   - 初始化 Express 应用
- *   - 挂载全局中间件（CORS、JSON 解析）
- *   - 挂载路由（登录路由、受保护的 SN 路由）
- *   - 启动 HTTP 服务
- */
-
-require('dotenv').config({ path: __dirname + '/.env' })  // 必须放在最顶部，确保后续代码能读取到环境变量
-
 const express = require("express")
 const cors = require("cors")
 const cookieParser = require('cookie-parser')
+// 应用入口只依赖统一配置对象，不再直接读取 `process.env`。
+const config = require('./config')
 
 // 中间件：JWT 鉴权
 const authMiddleware = require('./middleware/authMiddleware')
@@ -36,11 +25,13 @@ const app = express()
 
 /**
  * 全局 CORS 配置
- * 允许所有来源访问（你当前前后端分离开发时是合理的）
- * 如果未来上线生产环境，建议改为指定域名
+ * 这里改为读取配置中心维护的白名单数组：
+ *   - 本地开发可配置一个或多个前端地址
+ *   - 测试 / 生产可通过环境变量切换，无需改代码
+ *   - 避免把 origin 写死在入口文件里
  */
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',  // 不能用 * 否则 credential 无法生效
+  origin: config.cors.origins,
   credentials: true,  // 允许前端携带 Cookie
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -109,8 +100,9 @@ app.use((err, req, res, next) => {
 
 /**
  * 启动 HTTP 服务
+ * 端口从统一配置读取，确保端口默认值、类型转换、合法性校验都在一个地方完成。
  */
-const PORT = process.env.PORT || 3000
+const PORT = config.app.port
 
 app.listen(PORT, () => {
   console.log(`\n====================================`)

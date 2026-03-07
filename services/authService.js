@@ -19,6 +19,8 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const userService = require('./userService')   // 使用数据库查询用户
 const { AuthError } = require('../utils/errors')
+// 所有 token 相关配置集中来源于配置中心，方便统一替换 secret、过期时间和环境策略。
+const config = require('../config')
 
 /**
  * ================================
@@ -32,8 +34,9 @@ const { AuthError } = require('../utils/errors')
  * @returns {string} accessToken
  */
 function generateAccessToken(payload) {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '15m' // 15 分钟有效期
+  // Access Token 的密钥和有效期不再散落在业务代码中读取环境变量。
+  return jwt.sign(payload, config.auth.jwtSecret, {
+    expiresIn: config.auth.jwtExpiresIn
   })
 }
 
@@ -43,8 +46,9 @@ function generateAccessToken(payload) {
  * @returns {string} refreshToken
  */
 function generateRefreshToken(payload) {
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' // 7 天有效期
+  // Refresh Token 使用独立密钥，避免与 Access Token 共用同一 secret。
+  return jwt.sign(payload, config.auth.jwtRefreshSecret, {
+    expiresIn: config.auth.jwtRefreshExpiresIn
   })
 }
 
@@ -138,7 +142,8 @@ async function refreshAccessToken(refreshToken) {
 
   // 异步化 jwt.verify
   const decodedUser = await new Promise((resolve, reject) => {
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+    // refresh token 校验也走统一配置，保证登录、刷新、鉴权三处使用的是同一套参数来源。
+    jwt.verify(refreshToken, config.auth.jwtRefreshSecret, (err, decoded) => {
       if (err) {
         return reject(new AuthError('refresh token 无效或已过期', 'AUTH_REFRESH_TOKEN_EXPIRED'))
       }
