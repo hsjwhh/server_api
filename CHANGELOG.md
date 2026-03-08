@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.1] - 2026-03-08
+
 ### Added
 - Added a centralized configuration module with environment loading, parsing, and startup validation.
 - Added `.env.example` as the canonical template for local and deployment configuration.
 - Added a standardized project changelog following Keep a Changelog.
+- Added dated technical documentation under `doc/` for the env refactor and production deployment guidance.
 
 ### Changed
 - Changed application bootstrap to read CORS and port settings from the centralized config layer.
 - Changed authentication and middleware code to consume JWT and cookie settings from centralized configuration.
 - Changed database connection setup to read credentials and connection options from environment variables instead of hardcoded values.
+- Changed `.env.example` to include detailed Chinese comments and grouped production-oriented guidance.
 
 ### Security
 - Removed hardcoded database credentials from source-controlled runtime configuration.
