@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v0.1] - 2026-03-08
+## [0.1.1] - 2026-03-09
+
+### Added
+- 新增通用校验中间件 `middleware/validate.js`，支持对 `body`, `query`, `params` 的基础字段校验。
+- 在 `routes/snRoutes.js` 和 `routes/hwRoutes.js` 的搜索接口中强制要求 `keyword` 必填且长度不少于 4 个字符。
+
+## [0.1.0] - 2026-03-08
 
 ### Added
 - Added a centralized configuration module with environment loading, parsing, and startup validation.

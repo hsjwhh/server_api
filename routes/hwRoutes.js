@@ -18,6 +18,7 @@ const express = require('express')
 const router = express.Router()
 
 const hwController = require('../controllers/hwController')
+const { validateField } = require('../middleware/validate')
 
 /**
  * GET /api/hw/cpu
@@ -26,7 +27,7 @@ const hwController = require('../controllers/hwController')
  * 请求示例：
  *   /api/hw/cpu?keyword=R730
  */
-router.get('/cpu', hwController.searchCpu)
+router.get('/cpu', validateField('query', 'keyword', { min: 4, required: true }), hwController.searchCpu)
 
 /**
  * GET /api/hw/cpu/:id

@@ -15,6 +15,7 @@ const express = require('express')
 const router = express.Router()
 
 const snController = require('../controllers/snController')
+const { validateField } = require('../middleware/validate')
 
 /**
  * GET /api/sn
@@ -23,7 +24,7 @@ const snController = require('../controllers/snController')
  * 请求示例：
  *   /api/sn?keyword=R730
  */
-router.get('/', snController.searchSn)
+router.get('/', validateField('query', 'keyword', { min: 4, required: true }), snController.searchSn)
 
 /**
  * GET /api/sn/cpu2mb/:cpu
