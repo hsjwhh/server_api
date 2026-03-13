@@ -10,18 +10,34 @@
 const hwService = require("../services/hwService");
 
 // CPU 搜索（自动补全）
+// 支持 ?keyword=xxx & cores=yyy
 exports.searchCpu = async (req, res) => {
-    const keyword = req.query.keyword || "";
+    // 获取关键词和核心数
+    const { keyword, cores } = req.query;
 
-    // keyword 为空 → 返回空数组（前端自动补全需要）
-    if (!keyword) return res.json([]);
+    // 业务基础校验：不能查全表，必须至少提供 keyword 或 cores 之一
+    if (!keyword && !cores) {
+        return res.status(400).json({
+            message: "请至少输入 CPU 型号关键词或核心数"
+        });
+    }
 
     try {
-        const list = await hwService.getCpuName(keyword);
-        res.json(list); // 直接返回数组
+        // 调用 Service
+        const list = await hwService.getCpuName(keyword, cores);
+
+        // 如果结果集为空
+        if (!list || list.length === 0) {
+            return res.json([]);
+        }
+
+        res.json(list);
+
     } catch (err) {
         console.error("searchCpu error:", err);
-        res.status(500).json({ message: "服务器错误" });
+        res.status(500).json({
+            message: "服务器查询 CPU 列表失败"
+        });
     }
 };
 
@@ -61,7 +77,6 @@ exports.getCpuDetail = async (req, res) => {
 exports.getMbBySocket = async (req, res) => {
     const socket = req.params.socket; // URL 参数：/mb/:socket
 
-    // 参数校验
     if (!socket) {
         return res.status(400).json({
             message: "Socket is required"
@@ -71,20 +86,45 @@ exports.getMbBySocket = async (req, res) => {
     try {
         const data = await hwService.getMbBySocket(socket);
 
-        // 未找到 MB
-        if (!data) {
-            return res.status(404).json({
-                message: "Motherboard not found!"
-            });
+        // 如果未查到结果，直接返回空数组
+        if (!data || data.length === 0) {
+            return res.json([]);
         }
 
-        // 成功 → 直接返回 MB 数据对象
+        // 成功 → 返回数据对象
         res.json(data);
 
     } catch (err) {
         console.error("Motherboard 查询错误：", err);
         res.status(500).json({
-            message: "服务器错误"
+            message: "服务器查询主板失败"
+        });
+    }
+};
+
+// 根据关键词模糊搜索主板型号
+exports.searchMb = async (req, res) => {
+    const { keyword } = req.query;
+
+    if (!keyword) {
+        return res.status(400).json({
+            message: "请输入主板型号关键词"
+        });
+    }
+
+    try {
+        const list = await hwService.getMbByName(keyword);
+
+        if (!list || list.length === 0) {
+            return res.json([]);
+        }
+
+        res.json(list);
+
+    } catch (err) {
+        console.error("searchMb error:", err);
+        res.status(500).json({
+            message: "服务器查询主板型号失败"
         });
     }
 };

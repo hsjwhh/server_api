@@ -1,0 +1,30 @@
+# .rsync-exclude
+# 
+# 使用方法 (在另一台服务器执行):
+# rsync -avzP --exclude-from='root@<源IP>:/root/github/server_api/.rsync-exclude' root@<源IP>:/root/github/server_api/ ./
+#
+# [Gemini]
+
+# 核心排除：体积巨大且应在本地安装
+node_modules/
+
+# 版本控制：通常不需要同步 git 历史记录
+.git/
+
+# 环境配置：开发环境与生产环境配置通常不同，建议手动管理
+.env
+.env.local
+
+# 编辑器配置
+.vscode/
+.idea/
+
+# 日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# 系统临时文件
+.DS_Store
+Thumbs.db

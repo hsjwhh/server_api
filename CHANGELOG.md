@@ -11,7 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - 新增通用校验中间件 `middleware/validate.js`，支持对 `body`, `query`, `params` 的基础字段校验。
-- 在 `routes/snRoutes.js` 和 `routes/hwRoutes.js` 的搜索接口中强制要求 `keyword` 必填且长度不少于 4 个字符。
+- 在 `routes/snRoutes.js` 的搜索接口中强制要求 `keyword` 必填且不少于 4 个字符。
+- 升级 CPU 搜索接口 (`GET /api/hw/cpu`) 支持型号模糊搜索与核心数 (`cores`) 精确过滤的组合查询。
+- 为 CPU 搜索接口增加 `cores` 参数校验（最大 3 位长度），并支持型号或核心数任选其一。
+- 新增 `api-test.http` 测试脚本，支持使用 REST Client 插件进行全场景接口测试。
+- 新增 `.rsync-exclude` 排除列表，优化项目同步流程。
+- 新增主板型号搜索接口 (`GET /api/hw/mb`)，支持根据关键词模糊查询主板。
+- 在 `api-test.http` 中同步增加了主板搜索的测试用例。
 
 ## [0.1.0] - 2026-03-08
 

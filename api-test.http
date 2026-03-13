@@ -1,0 +1,61 @@
+# API 测试脚本 - [Gemini]
+# 使用说明:
+# 1. 安装 VSCode 插件: REST Client (作者: Huachao Mao)
+# 2. 修改 @baseUrl 为您的服务器地址
+# 3. 首先执行 [1. 登录] 请求，它会自动将 Token 存入变量 {{accessToken}}
+# 4. 后续请求会自动携带该 Token 进行鉴权
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### 1. 用户登录 (获取 Token)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "password123"
+}
+
+### 提取登录返回的 Token
+@accessToken = {{login.response.body.accessToken}}
+
+
+###########################################################
+### 硬件查询 (CPU 搜索)
+###########################################################
+
+### 2.1 组合搜索: 型号模糊 + 核心数精确
+GET {{baseUrl}}/api/hw/cpu?keyword=Gold&cores=16
+Authorization: Bearer {{accessToken}}
+
+### 2.2 仅搜索型号 (不少于 4 位)
+GET {{baseUrl}}/api/hw/cpu?keyword=Epyc
+Authorization: Bearer {{accessToken}}
+
+### 2.3 仅搜索核心数 (16 核)
+GET {{baseUrl}}/api/hw/cpu?cores=16
+Authorization: Bearer {{accessToken}}
+
+
+###########################################################
+### 硬件查询 (主板搜索)
+###########################################################
+
+### 2.4 根据关键词搜索主板型号 (不少于 4 位)
+GET {{baseUrl}}/api/hw/mb?keyword=X11D
+Authorization: Bearer {{accessToken}}
+
+### 2.5 根据 Socket 查询主板
+GET {{baseUrl}}/api/hw/mb/AM5
+Authorization: Bearer {{accessToken}}
+
+
+###########################################################
+### SN 查询
+###########################################################
+
+### 3.1 SN 搜索 (不少于 4 位)
+GET {{baseUrl}}/api/sn?keyword=R730
+Authorization: Bearer {{accessToken}}

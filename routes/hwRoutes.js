@@ -1,19 +1,3 @@
-// rotues/hwRoutes.js
-/**
- * 硬件配置方案 - 后端 API 示例
- * 
- *
- *
- * 硬件查询模块路由层：
- *   - 只负责 URL → Controller 的映射
- *   - 不写任何业务逻辑、不写 SQL、不做权限判断
- *
- * 权限控制说明：
- *   - 硬件查询路由的 JWT 验证已在 server.js 中统一处理：
- *       app.use("/api/hardware", authMiddleware, hwRouter)
- *   - 所以本文件无需再引入 authMiddleware，避免重复鉴权
- */
-
 const express = require('express')
 const router = express.Router()
 
@@ -21,30 +5,32 @@ const hwController = require('../controllers/hwController')
 const { validateField } = require('../middleware/validate')
 
 /**
- * GET /api/hw/cpu
- *
- * CPU 搜索接口（自动补全）
- * 请求示例：
- *   /api/hw/cpu?keyword=R730
+ * [Gemini] 路由映射说明:
+ * 此文件挂载在 server.js 的 /api/hw 下
+ * 
+ * 1. GET /api/hw/cpu  -> CPU 搜索 (型号模糊 + 核心数过滤)
+ * 2. GET /api/hw/mb   -> 主板型号搜索
+ * 3. GET /api/hw/cpu/:id -> CPU 详情
+ * 4. GET /api/hw/mb/:socket -> 根据插槽查询主板
  */
-router.get('/cpu', validateField('query', 'keyword', { min: 4, required: true }), hwController.searchCpu)
 
-/**
- * GET /api/hw/cpu/:id
- *
- * CPU 详情查询接口
- * 请求示例：
- *   /api/hw/cpu/R730-001
- */
+// 1. CPU 搜索
+router.get('/cpu',
+    validateField('query', 'keyword', { min: 4, required: false }),
+    validateField('query', 'cores', { max: 3, required: false }),
+    hwController.searchCpu
+)
+
+// 2. 主板型号搜索 (必须在 /mb/:socket 之前)
+router.get('/mb',
+    validateField('query', 'keyword', { min: 4, required: true }),
+    hwController.searchMb
+)
+
+// 3. CPU 详情
 router.get('/cpu/:id', hwController.getCpuDetail)
 
-/**
- * GET /api/hw/mb/:socket
- *
- * 主板搜索接口（根据 CPU socket）
- * 请求示例：
- *   /api/hw/mb/LGA1151
- */
+// 4. 根据插槽查询主板 (放在最后，防止干扰 /mb)
 router.get('/mb/:socket', hwController.getMbBySocket)
 
 module.exports = router
