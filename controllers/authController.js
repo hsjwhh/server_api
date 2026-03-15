@@ -12,6 +12,7 @@
  */
 
 const authService = require('../services/authService')
+const { encodeId } = require('../utils/obfuscate')
 // Cookie 策略也统一从配置中心读取，避免控制器里出现环境判断分支。
 const config = require('../config')
 
@@ -49,9 +50,15 @@ async function login(req, res, next) {
     // refreshToken → HttpOnly Cookie（JS 不可见）
     res.cookie(REFRESH_TOKEN_COOKIE, result.refreshToken, COOKIE_OPTIONS)
 
+    // 混淆用户 ID
+    const safeUser = {
+      ...result.user,
+      id: encodeId(result.user.id)
+    }
+
     // accessToken → Body（前端保存在内存中）
     res.json({
-      user: result.user,
+      user: safeUser,
       accessToken: result.accessToken
     })
 

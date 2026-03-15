@@ -23,7 +23,8 @@ const config = {
   app: {
     nodeEnv,
     port: getNumber('PORT', 3000),
-    frontendUrl
+    frontendUrl,
+    hashidsSalt: getString('HASHIDS_SALT', 'default-salt-please-change-it')
   },
   auth: {
     jwtSecret: getRequired('JWT_SECRET'),

@@ -8,6 +8,7 @@
  */
 
 const snService = require("../services/snService");
+const { encodeId } = require("../utils/obfuscate");
 
 // SN 搜索（自动补全）
 exports.searchSn = async (req, res) => {
@@ -18,7 +19,17 @@ exports.searchSn = async (req, res) => {
 
     try {
         const list = await snService.search(keyword);
-        res.json(list); // 直接返回数组
+
+        // 即使当前 SQL 只查了 sn, owner 等字段，没有查 id
+        // 但为了统一安全策略，我们尝试混淆 id (如果存在)
+        const obfuscatedList = list.map(item => {
+            if (item.id) {
+                return { ...item, id: encodeId(item.id) };
+            }
+            return item;
+        });
+
+        res.json(obfuscatedList);
     } catch (err) {
         console.error("searchSn error:", err);
         res.status(500).json({ message: "服务器错误" });
@@ -44,6 +55,11 @@ exports.getSnDetail = async (req, res) => {
             return res.status(404).json({
                 message: "SN 未找到"
             });
+        }
+
+        // 如果结果中包含 id，进行混淆
+        if (data.id) {
+            data.id = encodeId(data.id);
         }
 
         // 成功 → 直接返回 SN 数据对象

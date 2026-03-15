@@ -8,6 +8,7 @@
  */
 
 const hwService = require("../services/hwService");
+const { encodeId, decodeId } = require("../utils/obfuscate");
 
 // CPU 搜索（自动补全）
 // 支持 ?keyword=xxx & cores=yyy
@@ -31,7 +32,13 @@ exports.searchCpu = async (req, res) => {
             return res.json([]);
         }
 
-        res.json(list);
+        // 对 ID 进行混淆处理
+        const obfuscatedList = list.map(item => ({
+            ...item,
+            id: encodeId(item.id)
+        }));
+
+        res.json(obfuscatedList);
 
     } catch (err) {
         console.error("searchCpu error:", err);
@@ -43,12 +50,20 @@ exports.searchCpu = async (req, res) => {
 
 // CPU 详情
 exports.getCpuDetail = async (req, res) => {
-    const id = req.params.id; // URL 参数：/cpu/:id
+    const hashId = req.params.id; // URL 参数：/cpu/:id
 
     // 参数校验
-    if (!id) {
+    if (!hashId) {
         return res.status(400).json({
             message: "CPU id is required"
+        });
+    }
+
+    // 解码混淆 ID
+    const id = decodeId(hashId);
+    if (!id) {
+        return res.status(400).json({
+            message: "Invalid CPU id"
         });
     }
 
@@ -61,6 +76,9 @@ exports.getCpuDetail = async (req, res) => {
                 message: "CPU 未找到"
             });
         }
+
+        // 对返回结果中的 ID 也要混淆（保持一致性）
+        data.id = hashId;
 
         // 成功 → 直接返回 CPU 数据对象
         res.json(data);
@@ -91,8 +109,14 @@ exports.getMbBySocket = async (req, res) => {
             return res.json([]);
         }
 
+        // 对 ID 进行混淆处理
+        const obfuscatedList = data.map(item => ({
+            ...item,
+            id: encodeId(item.id)
+        }));
+
         // 成功 → 返回数据对象
-        res.json(data);
+        res.json(obfuscatedList);
 
     } catch (err) {
         console.error("Motherboard 查询错误：", err);
@@ -119,7 +143,13 @@ exports.searchMb = async (req, res) => {
             return res.json([]);
         }
 
-        res.json(list);
+        // 对 ID 进行混淆处理
+        const obfuscatedList = list.map(item => ({
+            ...item,
+            id: encodeId(item.id)
+        }));
+
+        res.json(obfuscatedList);
 
     } catch (err) {
         console.error("searchMb error:", err);

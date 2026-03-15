@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- 引入 `hashids` 库，对所有对外暴露的数字 ID（CPU、主板、SN详情、用户信息）进行混淆处理，防止 ID 遍历攻击。
+- 新增 `HASHIDS_SALT` 配置项，支持自定义混淆密钥。
+
+### Changed
+- 更新 `config/index.js` 和 `.env.example`，加入 `HASHIDS_SALT` 环境变量配置。
+- 修改 `hwController`、`snController` 和 `authController`，在输出 JSON 数据前对 ID 进行编码，在输入 ID 查询时进行解码。
+
 ## [0.1.1] - 2026-03-09
 
 ### Added
