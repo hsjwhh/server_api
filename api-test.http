@@ -78,7 +78,11 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/sn/cpu2mb/Gold%206248R
 Authorization: Bearer {{accessToken}}
 
-### 3.3 新增服务器信息 (POST)
+### 3.3 检查 SN 唯一性 (存在时 unique: false, 不存在时 true)
+GET {{baseUrl}}/api/sn/check-sn/SN20260316001
+Authorization: Bearer {{accessToken}}
+
+### 3.4 新增服务器信息 (POST)
 POST {{baseUrl}}/api/sn
 Content-Type: {{contentType}}
 Authorization: Bearer {{accessToken}}

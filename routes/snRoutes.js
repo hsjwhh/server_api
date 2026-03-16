@@ -37,6 +37,13 @@ router.post('/',
 )
 
 /**
+ * GET /api/sn/check-sn/:sn
+ *
+ * 检查 SN 是否唯一 (不存在即为 true)
+ */
+router.get('/check-sn/:sn', snController.checkSnUnique)
+
+/**
  * GET /api/sn/cpu2mb/:cpu
  *
  * 根据 CPU 型型号查询对应主板型号（去重）

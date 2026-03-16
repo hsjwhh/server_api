@@ -108,7 +108,17 @@ exports.getMbByCpu = async (req, res) => {
 // 新增服务器信息
 exports.addServer = async (req, res) => {
     try {
-        // 直接透传给 service 处理字段过滤
+        const { sn } = req.body;
+
+        // 1. 安全检查：如果 sn 已存在，直接报错（防止绕过前端校验重复插入）
+        const isUnique = await snService.isSnUnique(sn);
+        if (!isUnique) {
+            return res.status(409).json({
+                message: "该 SN 已存在，请勿重复添加"
+            });
+        }
+
+        // 2. 调用 service 插入
         const data = await snService.create(req.body);
 
         // 对返回结果中的 id 进行混淆
@@ -124,5 +134,25 @@ exports.addServer = async (req, res) => {
         res.status(500).json({
             message: "服务器错误，添加失败"
         });
+    }
+};
+
+/**
+ * 检查 SN 唯一性 (给前端校验用)
+ * GET /api/sn/check-sn/:sn
+ */
+exports.checkSnUnique = async (req, res) => {
+    const sn = req.params.sn;
+
+    if (!sn) {
+        return res.status(400).json({ message: "SN is required" });
+    }
+
+    try {
+        const isUnique = await snService.isSnUnique(sn);
+        res.json({ unique: isUnique });
+    } catch (err) {
+        console.error("检查 SN 唯一性失败：", err);
+        res.status(500).json({ message: "服务器错误" });
     }
 };

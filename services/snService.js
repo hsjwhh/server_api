@@ -51,3 +51,16 @@ exports.create = async (data) => {
     const rows = await query("SELECT * FROM server_info WHERE id = ?", [insertId]);
     return rows[0];
 };
+
+/**
+ * 检查 SN 唯一性
+ * @param {string} sn - 序列号
+ * @returns {Promise<boolean>} - true 表示唯一(不存在), false 表示已存在
+ */
+exports.isSnUnique = async (sn) => {
+    const rows = await query(
+        "SELECT COUNT(*) as count FROM server_info WHERE sn = ?",
+        [sn]
+    );
+    return rows[0].count === 0;
+};
