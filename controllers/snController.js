@@ -104,3 +104,25 @@ exports.getMbByCpu = async (req, res) => {
         });
     }
 };
+
+// 新增服务器信息
+exports.addServer = async (req, res) => {
+    try {
+        // 直接透传给 service 处理字段过滤
+        const data = await snService.create(req.body);
+
+        // 对返回结果中的 id 进行混淆
+        if (data.id) {
+            data.id = encodeId(data.id);
+        }
+
+        // 成功 → 返回 201 Created 及数据
+        res.status(201).json(data);
+
+    } catch (err) {
+        console.error("新增服务器信息失败：", err);
+        res.status(500).json({
+            message: "服务器错误，添加失败"
+        });
+    }
+};

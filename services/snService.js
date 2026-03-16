@@ -28,3 +28,26 @@ exports.getMbByCpu = async (cpu) => {
     );
     return rows;
 };
+
+// ✅ 插入新的服务器信息 (不处理 mb_id, cpu_id)
+exports.create = async (data) => {
+    const fields = [
+        'y', 'm', 'd', 'owner', 'agent', 'sn', 'customer', 'number', 'chassis', 'psu',
+        'mb', 'bmcpwd', 'cpu', 'cpun', 'mem', 'memn', 'm2', 'm2n', 'ssd', 'ssdn',
+        'hdd', 'hddn', 'raid', 'raidn', 'lan', 'lann', 'gpu', 'gpun', 'os', 'note'
+    ];
+
+    // 过滤掉不在 fields 中的键，并构建 SQL
+    const activeFields = fields.filter(f => data[f] !== undefined);
+    const placeholders = activeFields.map(() => '?').join(', ');
+    const values = activeFields.map(f => data[f]);
+
+    const sql = `INSERT INTO server_info (${activeFields.join(', ')}) VALUES (${placeholders})`;
+    
+    const result = await query(sql, values);
+    
+    // 返回插入后的完整对象 (包含数据库生成的 id)
+    const insertId = result.insertId;
+    const rows = await query("SELECT * FROM server_info WHERE id = ?", [insertId]);
+    return rows[0];
+};

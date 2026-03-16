@@ -27,9 +27,19 @@ const { validateField } = require('../middleware/validate')
 router.get('/', validateField('query', 'keyword', { min: 4, required: true }), snController.searchSn)
 
 /**
+ * POST /api/sn
+ *
+ * 新增服务器信息
+ */
+router.post('/',
+    validateField('body', 'sn', { min: 4, required: true }),
+    snController.addServer
+)
+
+/**
  * GET /api/sn/cpu2mb/:cpu
  *
- * 根据 CPU 型号查询对应主板型号（去重）
+ * 根据 CPU 型型号查询对应主板型号（去重）
  * 请求示例：
  *   /api/sn/cpu2mb/E5-2620
  *

@@ -8,7 +8,11 @@
 @baseUrl = http://localhost:3000
 @contentType = application/json
 
-### 1. 用户登录 (获取 Token)
+###########################################################
+### 1. 认证管理 (Auth)
+###########################################################
+
+### 1.1 用户登录 (获取 Token)
 # @name login
 POST {{baseUrl}}/api/auth/login
 Content-Type: {{contentType}}
@@ -21,9 +25,18 @@ Content-Type: {{contentType}}
 ### 提取登录返回的 Token
 @accessToken = {{login.response.body.accessToken}}
 
+### 1.2 刷新 Access Token
+# 说明: refreshToken 通过 HttpOnly Cookie 自动携带
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+### 1.3 用户登出
+POST {{baseUrl}}/api/auth/logout
+Content-Type: {{contentType}}
+
 
 ###########################################################
-### 硬件查询 (CPU 搜索)
+### 2. 硬件查询 (CPU & MB)
 ###########################################################
 
 ### 2.1 组合搜索: 型号模糊 + 核心数精确
@@ -38,24 +51,52 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/hw/cpu?cores=16
 Authorization: Bearer {{accessToken}}
 
+### 2.4 CPU 详情 (验证 ID 混淆)
+# 注意: {{hashId}} 需替换为 2.1 或 2.2 搜索结果中返回的加密 ID (如 jR8eG9)
+@hashId = jR8eG9
+GET {{baseUrl}}/api/hw/cpu/{{hashId}}
+Authorization: Bearer {{accessToken}}
 
-###########################################################
-### 硬件查询 (主板搜索)
-###########################################################
-
-### 2.4 根据关键词搜索主板型号 (不少于 4 位)
+### 2.5 根据关键词搜索主板型号 (不少于 4 位)
 GET {{baseUrl}}/api/hw/mb?keyword=X11D
 Authorization: Bearer {{accessToken}}
 
-### 2.5 根据 Socket 查询主板
+### 2.6 根据 Socket 查询主板
 GET {{baseUrl}}/api/hw/mb/AM5
 Authorization: Bearer {{accessToken}}
 
 
 ###########################################################
-### SN 查询
+### 3. 服务器信息查询 (SN)
 ###########################################################
 
 ### 3.1 SN 搜索 (不少于 4 位)
 GET {{baseUrl}}/api/sn?keyword=R730
+Authorization: Bearer {{accessToken}}
+
+### 3.2 根据 CPU 型号查询对应主板型号 (去重反查)
+GET {{baseUrl}}/api/sn/cpu2mb/Gold%206248R
+Authorization: Bearer {{accessToken}}
+
+### 3.3 新增服务器信息 (POST)
+POST {{baseUrl}}/api/sn
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "sn": "SN20260316001测试",
+  "owner": "Gemini",
+  "customer": "Standard Customer",
+  "y": 2026,
+  "m": 3,
+  "d": 16,
+  "cpu": "Intel Xeon Gold 6248R",
+  "mb": "Supermicro X11DPi-N",
+  "mem": "256GB DDR4",
+  "os": "Ubuntu 22.04 LTS",
+  "note": "Initial deployment test"
+}
+
+### 3.4 根据 SN 查询详情 (详情页)
+GET {{baseUrl}}/api/sn/SN20260316001
 Authorization: Bearer {{accessToken}}

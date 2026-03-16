@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 新增服务器信息插入接口 (`POST /api/sn`)，支持批量录入硬件配置字段。
+
 ### Security
 - 引入 `hashids` 库，对所有对外暴露的数字 ID（CPU、主板、SN详情、用户信息）进行混淆处理，防止 ID 遍历攻击。
 - 新增 `HASHIDS_SALT` 配置项，支持自定义混淆密钥。
