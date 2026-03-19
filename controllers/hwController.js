@@ -158,3 +158,73 @@ exports.searchMb = async (req, res) => {
         });
     }
 };
+
+/**
+ * ================================
+ * CPU 管理
+ * ================================
+ */
+
+// 新增 CPU
+exports.addCpu = async (req, res) => {
+    try {
+        const data = await hwService.createCpu(req.body);
+        data.id = encodeId(data.id);
+        res.status(201).json(data);
+    } catch (err) {
+        console.error("addCpu error:", err);
+        res.status(500).json({ message: "服务器新增 CPU 失败" });
+    }
+};
+
+// 更新 CPU
+exports.updateCpu = async (req, res) => {
+    const hashId = req.params.id;
+    const id = decodeId(hashId);
+    if (!id) return res.status(400).json({ message: "Invalid CPU id" });
+
+    try {
+        const data = await hwService.updateCpu(id, req.body);
+        if (!data) return res.status(404).json({ message: "CPU 未找到" });
+        data.id = hashId;
+        res.json(data);
+    } catch (err) {
+        console.error("updateCpu error:", err);
+        res.status(500).json({ message: "服务器更新 CPU 失败" });
+    }
+};
+
+/**
+ * ================================
+ * 主板 管理
+ * ================================
+ */
+
+// 新增主板
+exports.addMb = async (req, res) => {
+    try {
+        const data = await hwService.createMb(req.body);
+        data.id = encodeId(data.id);
+        res.status(201).json(data);
+    } catch (err) {
+        console.error("addMb error:", err);
+        res.status(500).json({ message: "服务器新增主板失败" });
+    }
+};
+
+// 更新主板
+exports.updateMb = async (req, res) => {
+    const hashId = req.params.id;
+    const id = decodeId(hashId);
+    if (!id) return res.status(400).json({ message: "Invalid MB id" });
+
+    try {
+        const data = await hwService.updateMb(id, req.body);
+        if (!data) return res.status(404).json({ message: "主板未找到" });
+        data.id = hashId;
+        res.json(data);
+    } catch (err) {
+        console.error("updateMb error:", err);
+        res.status(500).json({ message: "服务器更新主板失败" });
+    }
+};

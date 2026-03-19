@@ -51,17 +51,63 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/hw/cpu?cores=16
 Authorization: Bearer {{accessToken}}
 
-### 2.4 CPU 详情 (验证 ID 混淆)
+### 2.4 新增 CPU
+POST {{baseUrl}}/api/hw/cpu
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "cpu_short_name": "Test CPU 123",
+  "cpu_name": "Intel Test Core i99",
+  "cores": 128,
+  "socket": "LGA9999",
+  "tdp": "500W"
+}
+
+### 2.5 更新 CPU (需替换 ID)
+@cpuHashId = jR8eG9
+PUT {{baseUrl}}/api/hw/cpu/{{cpuHashId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "cpu_name": "Intel Test Core i99 Updated",
+  "note": "Update test"
+}
+
+### 2.6 CPU 详情 (验证 ID 混淆)
 # 注意: {{hashId}} 需替换为 2.1 或 2.2 搜索结果中返回的加密 ID (如 jR8eG9)
 @hashId = jR8eG9
 GET {{baseUrl}}/api/hw/cpu/{{hashId}}
 Authorization: Bearer {{accessToken}}
 
-### 2.5 根据关键词搜索主板型号 (不少于 4 位)
+### 2.7 根据关键词搜索主板型号 (不少于 4 位)
 GET {{baseUrl}}/api/hw/mb?keyword=X11D
 Authorization: Bearer {{accessToken}}
 
-### 2.6 根据 Socket 查询主板
+### 2.8 新增主板
+POST {{baseUrl}}/api/hw/mb
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "model": "Test MB X999",
+  "sockets": "LGA9999",
+  "memory_type": "DDR99",
+  "url": "http://example.com/mb"
+}
+
+### 2.9 更新主板 (需替换 ID)
+@mbHashId = jR8eG9
+PUT {{baseUrl}}/api/hw/mb/{{mbHashId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "max_tdp": "600W"
+}
+
+### 2.10 根据 Socket 查询主板
 GET {{baseUrl}}/api/hw/mb/AM5
 Authorization: Bearer {{accessToken}}
 

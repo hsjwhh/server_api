@@ -56,3 +56,77 @@ exports.getMbByName = async (keyword) => {
     const sql = "SELECT * FROM mb_info WHERE model LIKE ? ORDER BY model ASC LIMIT 20";
     return await query(sql, [`%${keyword}%`]);
 };
+
+/**
+ * ================================
+ * CPU 增改逻辑
+ * ================================
+ */
+
+// 新增 CPU
+exports.createCpu = async (data) => {
+    const fields = [
+        'cpu_s_name', 'cpu_short_name', 'cpu_name', 'release_date', 'cores',
+        'max_turbo', 'base_freq', 'cache', 'tdp', 'memory_channels',
+        'memory_speed', 'max_memory_speed', 'max_memory_capacity',
+        'ecc_support', 'socket', 'pci', 'scalability'
+    ];
+    const activeFields = fields.filter(f => data[f] !== undefined);
+    const sql = `INSERT INTO cpu_info (${activeFields.join(', ')}) VALUES (${activeFields.map(() => '?').join(', ')})`;
+    const result = await query(sql, activeFields.map(f => data[f]));
+    const rows = await query("SELECT * FROM cpu_info WHERE id = ?", [result.insertId]);
+    return rows[0];
+};
+
+// 更新 CPU
+exports.updateCpu = async (id, data) => {
+    const fields = [
+        'cpu_s_name', 'cpu_short_name', 'cpu_name', 'release_date', 'cores',
+        'max_turbo', 'base_freq', 'cache', 'tdp', 'memory_channels',
+        'memory_speed', 'max_memory_speed', 'max_memory_capacity',
+        'ecc_support', 'socket', 'pci', 'scalability'
+    ];
+    const activeFields = fields.filter(f => data[f] !== undefined);
+    if (activeFields.length === 0) return null;
+
+    const sql = `UPDATE cpu_info SET ${activeFields.map(f => `${f} = ?`).join(', ')} WHERE id = ?`;
+    await query(sql, [...activeFields.map(f => data[f]), id]);
+    const rows = await query("SELECT * FROM cpu_info WHERE id = ?", [id]);
+    return rows[0];
+};
+
+/**
+ * ================================
+ * 主板 增改逻辑
+ * ================================
+ */
+
+// 新增主板
+exports.createMb = async (data) => {
+    const fields = [
+        'url', 'model', 'product_collection', 'sockets', 'cpu_number',
+        'max_tdp', 'memory_type', 'dimm_number', 'max_memory',
+        'pcie_number', 'pcie_list', 'm2', 'input'
+    ];
+    const activeFields = fields.filter(f => data[f] !== undefined);
+    const sql = `INSERT INTO mb_info (${activeFields.join(', ')}) VALUES (${activeFields.map(() => '?').join(', ')})`;
+    const result = await query(sql, activeFields.map(f => data[f]));
+    const rows = await query("SELECT * FROM mb_info WHERE id = ?", [result.insertId]);
+    return rows[0];
+};
+
+// 更新主板
+exports.updateMb = async (id, data) => {
+    const fields = [
+        'url', 'model', 'product_collection', 'sockets', 'cpu_number',
+        'max_tdp', 'memory_type', 'dimm_number', 'max_memory',
+        'pcie_number', 'pcie_list', 'm2', 'input'
+    ];
+    const activeFields = fields.filter(f => data[f] !== undefined);
+    if (activeFields.length === 0) return null;
+
+    const sql = `UPDATE mb_info SET ${activeFields.map(f => `${f} = ?`).join(', ')} WHERE id = ?`;
+    await query(sql, [...activeFields.map(f => data[f]), id]);
+    const rows = await query("SELECT * FROM mb_info WHERE id = ?", [id]);
+    return rows[0];
+};

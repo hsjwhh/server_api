@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - 新增服务器信息插入接口 (`POST /api/sn`)，支持批量录入硬件配置字段。
 - 新增 SN 唯一性检查接口 (`GET /api/sn/check-sn/:sn`)，支持前端实时校验。
+- 新增 CPU 插入 (`POST /api/hw/cpu`) 与更新 (`PUT /api/hw/cpu/:id`) 接口。
+- 新增主板插入 (`POST /api/hw/mb`) 与更新 (`PUT /api/hw/mb/:id`) 接口。
 
 ### Security
 - 引入 `hashids` 库，对所有对外暴露的数字 ID（CPU、主板、SN详情、用户信息）进行混淆处理，防止 ID 遍历攻击。

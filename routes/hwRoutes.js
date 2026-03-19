@@ -27,6 +27,30 @@ router.get('/mb',
     hwController.searchMb
 )
 
+// -----------------------------------------
+// CPU & MB 增改接口
+// -----------------------------------------
+
+// 新增 CPU
+router.post('/cpu',
+    validateField('body', 'cpu_short_name', { min: 2, required: true }),
+    hwController.addCpu
+)
+
+// 更新 CPU (使用混淆后的 :id)
+router.put('/cpu/:id', hwController.updateCpu)
+
+// 新增主板
+router.post('/mb',
+    validateField('body', 'model', { min: 2, required: true }),
+    hwController.addMb
+)
+
+// 更新主板 (使用混淆后的 :id)
+router.put('/mb/:id', hwController.updateMb)
+
+// -----------------------------------------
+
 // 3. CPU 详情
 router.get('/cpu/:id', hwController.getCpuDetail)
 

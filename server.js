@@ -103,9 +103,11 @@ app.use((err, req, res, next) => {
  * 端口从统一配置读取，确保端口默认值、类型转换、合法性校验都在一个地方完成。
  */
 const PORT = config.app.port
+const HOST = '127.0.0.1' // 监听本地 IPv4 地址
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   console.log(`\n====================================`)
   console.log(`  ✅ API running on port ${PORT}`)
   console.log(`====================================\n`)
 })
+
