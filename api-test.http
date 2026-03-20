@@ -150,3 +150,12 @@ Authorization: Bearer {{accessToken}}
 ### 3.4 根据 SN 查询详情 (详情页)
 GET {{baseUrl}}/api/sn/SN20260316001
 Authorization: Bearer {{accessToken}}
+
+
+###########################################################
+### 4. 仪表盘统计 (Dashboard)
+###########################################################
+
+### 4.1 获取汇总统计、最近记录及 OS 分布
+GET {{baseUrl}}/api/stats/dashboard
+Authorization: Bearer {{accessToken}}

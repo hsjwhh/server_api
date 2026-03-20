@@ -14,7 +14,7 @@ exports.search = async (keyword) => {
 // ✅ 根据 SN 获取详情
 exports.getDetail = async (sn) => {
     const rows = await query(
-        "SELECT * FROM server_info WHERE sn = ? LIMIT 1",
+        "SELECT *, DATE_FORMAT(entry_date, '%Y-%m-%d') as entry_date FROM server_info WHERE sn = ? LIMIT 1",
         [sn]
     );
     return rows[0] || null;
@@ -29,26 +29,43 @@ exports.getMbByCpu = async (cpu) => {
     return rows;
 };
 
-// ✅ 插入新的服务器信息 (不处理 mb_id, cpu_id)
+// ✅ 插入新的服务器信息 (智能兼容 entry_date 或 y,m,d 传参)
 exports.create = async (data) => {
     const fields = [
-        'y', 'm', 'd', 'owner', 'agent', 'sn', 'customer', 'number', 'chassis', 'psu',
+        'y', 'm', 'd', 'entry_date', 'owner', 'agent', 'sn', 'customer', 'number', 'chassis', 'psu',
         'mb', 'bmcpwd', 'cpu', 'cpun', 'mem', 'memn', 'm2', 'm2n', 'ssd', 'ssdn',
         'hdd', 'hddn', 'raid', 'raidn', 'lan', 'lann', 'gpu', 'gpun', 'os', 'note'
     ];
 
-    // 过滤掉不在 fields 中的键，并构建 SQL
-    const activeFields = fields.filter(f => data[f] !== undefined);
-    const placeholders = activeFields.map(() => '?').join(', ');
-    const values = activeFields.map(f => data[f]);
+    let date;
+    if (data.entry_date) {
+        // 1. 如果有 entry_date，优先使用
+        date = new Date(data.entry_date);
+    } else if (data.y && data.m && data.d) {
+        // 2. 如果只有 y, m, d，自动合成
+        date = new Date(`${data.y}-${data.m}-${data.d}`);
+    } else {
+        // 3. 保底：今天
+        date = new Date();
+    }
+    
+    // 确保数据双向同步，无论是哪种方式进来的日期，最终都填满这四个字段
+    const enrichedData = {
+        ...data,
+        entry_date: date.toISOString().split('T')[0],
+        y: date.getFullYear(),
+        m: date.getMonth() + 1,
+        d: date.getDate()
+    };
 
-    const sql = `INSERT INTO server_info (${activeFields.join(', ')}) VALUES (${placeholders})`;
+    const activeFields = fields.filter(f => enrichedData[f] !== undefined);
+    const sql = `INSERT INTO server_info (${activeFields.join(', ')}) VALUES (${activeFields.map(() => '?').join(', ')})`;
     
-    const result = await query(sql, values);
-    
-    // 返回插入后的完整对象 (包含数据库生成的 id)
-    const insertId = result.insertId;
-    const rows = await query("SELECT * FROM server_info WHERE id = ?", [insertId]);
+    const result = await query(sql, activeFields.map(f => enrichedData[f]));
+    const rows = await query(
+        "SELECT *, DATE_FORMAT(entry_date, '%Y-%m-%d') as entry_date FROM server_info WHERE id = ?", 
+        [result.insertId]
+    );
     return rows[0];
 };
 
