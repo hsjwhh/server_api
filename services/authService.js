@@ -17,6 +17,7 @@
 
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+const { query } = require('../db')
 const userService = require('./userService')   // 使用数据库查询用户
 const { AuthError } = require('../utils/errors')
 // 所有 token 相关配置集中来源于配置中心，方便统一替换 secret、过期时间和环境策略。
@@ -24,97 +25,78 @@ const config = require('../config')
 
 /**
  * ================================
- * 1. Token 生成函数
+ * 1. Token 生成与辅助函数
  * ================================
  */
 
-/**
- * 生成 Access Token（短期有效）
- * @param {object} payload - 写入 token 的用户信息
- * @returns {string} accessToken
- */
 function generateAccessToken(payload) {
-  // Access Token 的密钥和有效期不再散落在业务代码中读取环境变量。
   return jwt.sign(payload, config.auth.jwtSecret, {
     expiresIn: config.auth.jwtExpiresIn
   })
 }
 
-/**
- * 生成 Refresh Token（长期有效）
- * @param {object} payload
- * @returns {string} refreshToken
- */
 function generateRefreshToken(payload) {
-  // Refresh Token 使用独立密钥，避免与 Access Token 共用同一 secret。
   return jwt.sign(payload, config.auth.jwtRefreshSecret, {
     expiresIn: config.auth.jwtRefreshExpiresIn
   })
 }
 
 /**
- * ================================
- * 2. refreshToken 存储（示例）
- * ================================
- *
- * 这里使用内存数组存储 refreshToken：
- *   - 简单易用
- *   - 适合开发阶段
- *
- * 生产环境建议改为：
- *   - MySQL 表（refresh_tokens）
- *   - Redis（更快）
- *   - 或者 JWT 黑名单机制
+ * 解析过期时间配置并返回 Date 对象
+ * 例如 '7d' -> 7天后的日期
  */
-let refreshTokensStore = []
+function getExpiresAt(expiresIn) {
+  const match = expiresIn.match(/^(\d+)([smhd])$/)
+  if (!match) return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 默认 7 天
+
+  const value = parseInt(match[1])
+  const unit = match[2]
+  const msMap = { s: 1000, m: 60000, h: 3600000, d: 86400000 }
+  
+  return new Date(Date.now() + value * msMap[unit])
+}
 
 /**
  * ================================
- * 3. 登录逻辑（数据库版本）
+ * 2. 核心业务逻辑
  * ================================
- *
- * @param {string} username
- * @param {string} password
- * @returns {object} { user, accessToken, refreshToken }
+ */
+
+/**
+ * 登录逻辑
  */
 async function login(username, password) {
   // 1. 从数据库查询用户
   const user = await userService.findUserByUsername(username)
 
-  // 用户不存在时，仍执行一次 bcrypt.compare（dummy）
-  // 目的：防止攻击者通过响应时间差判断用户是否存在（时序一致性防为主）
-  if (!user) {
+  if (!user || user.status !== 1) {
     await bcrypt.compare(password, '$2b$10$dummyhashfortiminggxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
   }
 
-  // 2. 用户存在但已禁用 (状态 1 表示正常，0 表示禁用)
-  if (user.status !== 1) {
-    // 同样不透露是哪个原因，延迟后再抛出（时序一致）
-    await bcrypt.compare(password, '$2b$10$dummyhashfortiminggxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
-  }
-
-  // 3. 校验密码（bcrypt 对比明文密码 vs 哈希）
+  // 2. 校验密码
   const isMatch = await bcrypt.compare(password, user.password_hash)
-
   if (!isMatch) {
     throw new AuthError('用户名或密码错误', 'AUTH_INVALID_CREDENTIALS')
   }
 
-  // 4. 构造写入 token 的 payload（不要包含密码）
+  // 3. 构造 payload
   const payload = {
     id: user.id,
     username: user.username,
     role: user.role
   }
 
-  // 5. 生成 token
+  // 4. 生成 token
   const accessToken = generateAccessToken(payload)
   const refreshToken = generateRefreshToken(payload)
 
-  // 6. 存储 refreshToken（未来会改成数据库）
-  refreshTokensStore.push(refreshToken)
+  // 5. 存储 refreshToken 到数据库
+  const expiresAt = getExpiresAt(config.auth.jwtRefreshExpiresIn)
+  await query(
+    'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+    [user.id, refreshToken, expiresAt]
+  )
 
   return {
     user: payload,
@@ -124,39 +106,38 @@ async function login(username, password) {
 }
 
 /**
- * ================================
- * 4. 刷新 accessToken
- * ================================
- *
- * @param {string} refreshToken
- * @returns {object} { accessToken }
+ * 刷新 accessToken
  */
 async function refreshAccessToken(refreshToken) {
   if (!refreshToken) {
     throw new AuthError('缺少 refresh token', 'AUTH_REFRESH_TOKEN_MISSING')
   }
 
-  if (!refreshTokensStore.includes(refreshToken)) {
-    throw new AuthError('refresh token 无效或已登出', 'AUTH_REFRESH_TOKEN_INVALID')
+  // 1. 数据库校验：是否存在、是否已吊销、是否过期
+  const rows = await query(
+    'SELECT * FROM refresh_tokens WHERE token = ? AND revoked = 0 AND expires_at > NOW() LIMIT 1',
+    [refreshToken]
+  )
+  
+  if (rows.length === 0) {
+    throw new AuthError('refresh token 无效、已过期或已登出', 'AUTH_REFRESH_TOKEN_INVALID')
   }
 
-  // 异步化 jwt.verify
+  const tokenRecord = rows[0]
+
+  // 2. 签名校验
   const decodedUser = await new Promise((resolve, reject) => {
-    // refresh token 校验也走统一配置，保证登录、刷新、鉴权三处使用的是同一套参数来源。
     jwt.verify(refreshToken, config.auth.jwtRefreshSecret, (err, decoded) => {
-      if (err) {
-        return reject(new AuthError('refresh token 无效或已过期', 'AUTH_REFRESH_TOKEN_EXPIRED'))
-      }
+      if (err) return reject(new AuthError('refresh token 签名无效', 'AUTH_REFRESH_TOKEN_EXPIRED'))
       resolve(decoded)
     })
   })
 
-  // 补一次数据库查询，确认用户状态仍然有效
-  // （封号、删除用户后防止用旧 refreshToken 继续获取 accessToken）
+  // 3. 确认用户状态
   const currentUser = await userService.findUserByUsername(decodedUser.username)
   if (!currentUser || currentUser.status !== 1) {
-    // token 仍在内存列表中，主动撤销
-    refreshTokensStore = refreshTokensStore.filter(t => t !== refreshToken)
+    // 标记该 token 无效
+    await query('UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?', [tokenRecord.user_id])
     throw new AuthError('账号已停用，请重新登录', 'AUTH_USER_DISABLED')
   }
 
@@ -172,16 +153,14 @@ async function refreshAccessToken(refreshToken) {
 }
 
 /**
- * ================================
- * 5. 登出逻辑
- * ================================
- *
- * @param {string} refreshToken
- * @returns {object}
+ * 登出逻辑
  */
 async function logout(refreshToken) {
-  // 从存储中删除 refreshToken
-  refreshTokensStore = refreshTokensStore.filter((t) => t !== refreshToken)
+  // 采用标准吊销逻辑：不删除记录，而是标记为已吊销并记录时间
+  await query(
+    'UPDATE refresh_tokens SET revoked = 1, revoked_at = NOW() WHERE token = ? AND revoked = 0',
+    [refreshToken]
+  )
 
   return {
     success: true

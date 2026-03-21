@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 新增主板插入 (`POST /api/hw/mb`) 与更新 (`PUT /api/hw/mb/:id`) 接口。
 
 ### Changed
+- **认证增强**：将 Refresh Token 存储从内存迁移至数据库 (`refresh_tokens` 表)，支持服务重启后的会话保持。
+- **登出逻辑优化**：实现标准化的“逻辑吊销”机制，登出后在数据库中标记 Token 为已吊销并记录 `revoked_at` 时间。
 - **数据库重构**：为 `server_info` 表新增标准 `entry_date` (DATE) 字段，并完成存量数据从 `y, m, d` 字段的合并迁移。
 - **日期处理增强**：`snService` 现在智能兼容 `entry_date` 或传统的 `y, m, d` 输入，并自动实现双向数据同步；同时规范化 API 输出格式为 `YYYY-MM-DD`。
 - **Dashboard 优化**：限制操作系统分布统计仅显示前 10 名，提升图表展示效果。
