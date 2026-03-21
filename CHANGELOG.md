@@ -17,8 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **数据库重构**：为 `server_info` 表新增标准 `entry_date` (DATE) 字段，并完成存量数据从 `y, m, d` 字段的合并迁移。
 - **日期处理增强**：`snService` 现在智能兼容 `entry_date` 或传统的 `y, m, d` 输入，并自动实现双向数据同步；同时规范化 API 输出格式为 `YYYY-MM-DD`。
+- **Dashboard 优化**：限制操作系统分布统计仅显示前 10 名，提升图表展示效果。
 - 修改 `hwController`、`snController` 和 `authController`，在输出 JSON 数据前对 ID 进行编码，在输入 ID 查询时进行解码。
 - 更新 `config/index.js` 和 `.env.example`，加入 `HASHIDS_SALT` 环境变量配置。
+
+### Fixed
+- **Docker 兼容性修复**：移除 `server.js` 中的本地监听限制，恢复默认监听以确保 Docker 容器内外连接正常。
 
 ### Security
 - 引入 `hashids` 库，对所有对外暴露的数字 ID（CPU、主板、SN详情、用户信息）进行混淆处理，防止 ID 遍历攻击。

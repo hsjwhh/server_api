@@ -35,13 +35,14 @@ exports.getRecentServers = async (limit = 10) => {
 /**
  * 获取操作系统分布统计
  */
-exports.getOsDistribution = async () => {
+exports.getOsDistribution = async (limit = 10) => {
     const sql = `
         SELECT os as name, COUNT(*) as count 
         FROM server_info 
         WHERE os IS NOT NULL AND os != ''
         GROUP BY os 
         ORDER BY count DESC
+        LIMIT ?
     `;
-    return await query(sql);
+    return await query(sql, [limit]);
 };
