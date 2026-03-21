@@ -98,6 +98,12 @@ async function login(username, password) {
     [user.id, refreshToken, expiresAt]
   )
 
+  // 非阻塞清理：删除当前用户的过期和已吊销 token，不影响登录主流程
+  query(
+    'DELETE FROM refresh_tokens WHERE user_id = ? AND (expires_at < NOW() OR revoked = 1)',
+    [user.id]
+  ).catch(err => console.error('[cleanupTokens] 清理失败:', err))
+
   return {
     user: payload,
     accessToken,

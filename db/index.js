@@ -10,7 +10,8 @@ const pool = mysql.createPool({
     password: config.db.password,
     database: config.db.database,
     waitForConnections: config.db.waitForConnections,
-    queueLimit: config.db.queueLimit
+    queueLimit: config.db.queueLimit,
+    connectionLimit: config.db.connectionLimit
 });
 
 // 对外继续暴露统一的 query 方法，尽量不影响上层 service 的调用方式。

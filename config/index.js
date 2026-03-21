@@ -48,7 +48,8 @@ const config = {
     password: getRequired('DB_PASSWORD'),
     database: getRequired('DB_NAME'),
     waitForConnections: true,
-    queueLimit: getNumber('DB_QUEUE_LIMIT', 0)
+    queueLimit: getNumber('DB_QUEUE_LIMIT', 0),
+    connectionLimit: getNumber('DB_CONNECTION_LIMIT', 10)
   }
 }
 
