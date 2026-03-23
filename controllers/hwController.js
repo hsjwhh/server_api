@@ -91,7 +91,7 @@ exports.getCpuDetail = async (req, res) => {
     }
 };
 
-// 主板详情
+// 主板详情 GET /api/hw/mb/detail/:id
 exports.getMbDetail = async (req, res) => {
     const hashId = req.params.id;
 

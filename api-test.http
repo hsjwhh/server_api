@@ -111,6 +111,12 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/hw/mb/AM5
 Authorization: Bearer {{accessToken}}
 
+### 2.11 主板详情 (验证 ID 混淆)
+# 注意: {{mbHashId}} 需替换为 2.7 或 2.10 搜索结果中返回的加密 ID (如 jR8eG9)
+@mbHashId = jR8eG9
+GET {{baseUrl}}/api/hw/mb/detail/{{mbHashId}}
+Authorization: Bearer {{accessToken}}
+
 
 ###########################################################
 ### 3. 服务器信息查询 (SN)
