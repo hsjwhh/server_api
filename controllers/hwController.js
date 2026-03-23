@@ -91,6 +91,31 @@ exports.getCpuDetail = async (req, res) => {
     }
 };
 
+// 主板详情
+exports.getMbDetail = async (req, res) => {
+    const hashId = req.params.id;
+
+    const id = decodeId(hashId);
+    if (!id) {
+        return res.status(400).json({ message: "Invalid MB id" });
+    }
+
+    try {
+        const data = await hwService.getMbDetail(id);
+
+        if (!data) {
+            return res.status(404).json({ message: "主板未找到" });
+        }
+
+        data.id = hashId;
+        res.json(data);
+
+    } catch (err) {
+        console.error("getMbDetail error:", err);
+        res.status(500).json({ message: "服务器查询主板详情失败" });
+    }
+};
+
 // Motherboard 搜索
 exports.getMbBySocket = async (req, res) => {
     const socket = req.params.socket; // URL 参数：/mb/:socket

@@ -57,6 +57,15 @@ exports.getMbByName = async (keyword) => {
     return await query(sql, [`%${keyword}%`]);
 };
 
+// ✅ 根据主板 ID 获取详情
+exports.getMbDetail = async (id) => {
+    const rows = await query(
+        "SELECT * FROM mb_info WHERE id = ?",
+        [id]
+    );
+    return rows[0] ?? null;
+};
+
 /**
  * ================================
  * CPU 增改逻辑
