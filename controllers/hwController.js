@@ -48,6 +48,27 @@ exports.searchCpu = async (req, res) => {
     }
 };
 
+// 根据 cpu_s_name 模糊搜索唯一的 cpu_name 列表
+exports.searchCpuNamesBySName = async (req, res) => {
+    const { keyword } = req.query;
+
+    if (!keyword) {
+        return res.status(400).json({
+            message: "请输入 CPU 系列关键词 (cpu_s_name)"
+        });
+    }
+
+    try {
+        const list = await hwService.getCpuNamesBySName(keyword);
+        res.json(list);
+    } catch (err) {
+        console.error("searchCpuNamesBySName error:", err);
+        res.status(500).json({
+            message: "服务器查询 CPU 名称列表失败"
+        });
+    }
+};
+
 // CPU 详情
 exports.getCpuDetail = async (req, res) => {
     const hashId = req.params.id; // URL 参数：/cpu/:id

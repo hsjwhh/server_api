@@ -51,7 +51,11 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/hw/cpu?cores=16
 Authorization: Bearer {{accessToken}}
 
-### 2.4 新增 CPU
+### 2.4 根据 cpu_s_name 模糊搜索唯一的 cpu_name 列表
+GET {{baseUrl}}/api/hw/cpu/s-name?keyword=Gold
+Authorization: Bearer {{accessToken}}
+
+### 2.5 新增 CPU
 POST {{baseUrl}}/api/hw/cpu
 Content-Type: {{contentType}}
 Authorization: Bearer {{accessToken}}

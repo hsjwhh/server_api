@@ -9,10 +9,11 @@ const { validateField } = require('../middleware/validate')
  * 此文件挂载在 server.js 的 /api/hw 下
  * 
  * 1. GET /api/hw/cpu  -> CPU 搜索 (型号模糊 + 核心数过滤)
- * 2. GET /api/hw/mb   -> 主板型号搜索
- * 3. GET /api/hw/cpu/:id -> CPU 详情
- * 4. GET /api/hw/mb/detail/:id -> 主板详情
- * 5. GET /api/hw/mb/:socket -> 根据插槽查询主板
+ * 2. GET /api/hw/cpu/s-name -> 根据 cpu_s_name 模糊搜索 cpu_name 列表
+ * 3. GET /api/hw/mb   -> 主板型号搜索
+ * 4. GET /api/hw/cpu/:id -> CPU 详情
+ * 5. GET /api/hw/mb/detail/:id -> 主板详情
+ * 6. GET /api/hw/mb/:socket -> 根据插槽查询主板
  */
 
 // 1. CPU 搜索
@@ -22,7 +23,13 @@ router.get('/cpu',
     hwController.searchCpu
 )
 
-// 2. 主板型号搜索 (必须在 /mb/:socket 之前)
+// 2. 根据 cpu_s_name 模糊搜索唯一的 cpu_name 列表
+router.get('/cpu/s-name',
+    validateField('query', 'keyword', { min: 3, required: true }),
+    hwController.searchCpuNamesBySName
+)
+
+// 3. 主板型号搜索 (必须在 /mb/:socket 之前)
 router.get('/mb',
     validateField('query', 'keyword', { min: 4, required: true }),
     hwController.searchMb
@@ -52,13 +59,13 @@ router.put('/mb/:id', hwController.updateMb)
 
 // -----------------------------------------
 
-// 3. CPU 详情
+// 4. CPU 详情
 router.get('/cpu/:id', hwController.getCpuDetail)
 
-// 4. 根据 ID 获取主板详情
+// 5. 根据 ID 获取主板详情
 router.get('/mb/detail/:id', hwController.getMbDetail)
 
-// 5. 根据插槽查询主板列表
+// 6. 根据插槽查询主板列表
 router.get('/mb/:socket', hwController.getMbBySocket)
 
 module.exports = router
