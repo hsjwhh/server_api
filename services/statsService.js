@@ -9,8 +9,8 @@ exports.getSummary = async () => {
 
     const sql = `
         SELECT 
-            (SELECT COUNT(*) FROM server_info) as totalCount,
-            (SELECT COUNT(*) FROM server_info WHERE DATE_FORMAT(entry_date, '%Y-%m') = ?) as monthlyCount,
+            (SELECT SUM(CASE WHEN number REGEXP '^[0-9]+$' THEN CAST(number AS UNSIGNED) ELSE 1 END) FROM server_info) as totalCount,
+            (SELECT SUM(CASE WHEN number REGEXP '^[0-9]+$' THEN CAST(number AS UNSIGNED) ELSE 1 END) FROM server_info WHERE DATE_FORMAT(entry_date, '%Y-%m') = ?) as monthlyCount,
             (SELECT COUNT(DISTINCT customer) FROM server_info) as customerCount,
             (SELECT COUNT(*) FROM server_info WHERE sn IS NULL OR sn = '') as pendingInfoCount
     `;
