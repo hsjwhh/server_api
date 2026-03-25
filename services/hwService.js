@@ -35,9 +35,9 @@ exports.getCpuName = async (keyword, cores) => {
 
 // ✅ 根据 cpu_s_name 模糊搜索并返回唯一的 cpu_name 列表
 exports.getCpuNamesBySName = async (keyword) => {
-    const sql = "SELECT DISTINCT cpu_name FROM cpu_info WHERE cpu_s_name LIKE ? ORDER BY cpu_name ASC LIMIT 50";
+    const sql = "SELECT cpu_s_name FROM cpu_info WHERE cpu_s_name LIKE ? LIMIT 10";
     const rows = await query(sql, [`%${keyword}%`]);
-    return rows.map(row => row.cpu_name);
+    return rows.map(row => row.cpu_s_name);
 };
 
 // ✅ 根据 CPU id 获取详情
