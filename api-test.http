@@ -65,10 +65,12 @@ Authorization: Bearer {{accessToken}}
   "cpu_name": "Intel Test Core i99",
   "cores": 128,
   "socket": "LGA9999",
-  "tdp": "500W"
+  "tdp": "500W",
+  "gpu": "Intel Arc Graphics",
+  "sku": "SKU-999-XYZ"
 }
 
-### 2.5 更新 CPU (需替换 ID)
+### 2.7 更新 CPU (需替换 ID)
 @cpuHashId = jR8eG9
 PUT {{baseUrl}}/api/hw/cpu/{{cpuHashId}}
 Content-Type: {{contentType}}
@@ -76,8 +78,10 @@ Authorization: Bearer {{accessToken}}
 
 {
   "cpu_name": "Intel Test Core i99 Updated",
+  "gpu": "NVIDIA RTX 4090 (Test Update)",
   "note": "Update test"
 }
+
 
 ### 2.6 CPU 详情 (验证 ID 混淆)
 # 注意: {{hashId}} 需替换为 2.1 或 2.2 搜索结果中返回的加密 ID (如 jR8eG9)

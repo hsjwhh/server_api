@@ -85,7 +85,7 @@ exports.createCpu = async (data) => {
         'cpu_s_name', 'cpu_short_name', 'cpu_name', 'release_date', 'cores',
         'max_turbo', 'base_freq', 'cache', 'tdp', 'memory_channels',
         'memory_speed', 'max_memory_speed', 'max_memory_capacity',
-        'ecc_support', 'socket', 'pci', 'scalability'
+        'ecc_support', 'socket', 'pci', 'scalability', 'gpu', 'sku'
     ];
     const activeFields = fields.filter(f => data[f] !== undefined);
     const sql = `INSERT INTO cpu_info (${activeFields.join(', ')}) VALUES (${activeFields.map(() => '?').join(', ')})`;
@@ -100,7 +100,7 @@ exports.updateCpu = async (id, data) => {
         'cpu_s_name', 'cpu_short_name', 'cpu_name', 'release_date', 'cores',
         'max_turbo', 'base_freq', 'cache', 'tdp', 'memory_channels',
         'memory_speed', 'max_memory_speed', 'max_memory_capacity',
-        'ecc_support', 'socket', 'pci', 'scalability'
+        'ecc_support', 'socket', 'pci', 'scalability', 'gpu', 'sku'
     ];
     const activeFields = fields.filter(f => data[f] !== undefined);
     if (activeFields.length === 0) return null;
