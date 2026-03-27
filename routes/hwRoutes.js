@@ -3,6 +3,7 @@ const router = express.Router()
 
 const hwController = require('../controllers/hwController')
 const { validateField } = require('../middleware/validate')
+const requirePermission = require('../middleware/requirePermission')
 
 /**
  * [Gemini] 路由映射说明:
@@ -41,21 +42,29 @@ router.get('/mb',
 
 // 新增 CPU
 router.post('/cpu',
+    requirePermission('cpu:write'),
     validateField('body', 'cpu_short_name', { min: 2, required: true }),
     hwController.addCpu
 )
 
 // 更新 CPU (使用混淆后的 :id)
-router.put('/cpu/:id', hwController.updateCpu)
+router.put('/cpu/:id',
+    requirePermission('cpu:write'),
+    hwController.updateCpu
+)
 
 // 新增主板
 router.post('/mb',
+    requirePermission('mb:write'),
     validateField('body', 'model', { min: 2, required: true }),
     hwController.addMb
 )
 
 // 更新主板 (使用混淆后的 :id)
-router.put('/mb/:id', hwController.updateMb)
+router.put('/mb/:id',
+    requirePermission('mb:write'),
+    hwController.updateMb
+)
 
 // -----------------------------------------
 

@@ -16,6 +16,7 @@ const router = express.Router()
 
 const snController = require('../controllers/snController')
 const { validateField } = require('../middleware/validate')
+const requirePermission = require('../middleware/requirePermission')
 
 /**
  * GET /api/sn
@@ -24,7 +25,11 @@ const { validateField } = require('../middleware/validate')
  * 请求示例：
  *   /api/sn?keyword=R730
  */
-router.get('/', validateField('query', 'keyword', { min: 4, required: true }), snController.searchSn)
+router.get('/',
+    requirePermission('sn:check'),
+    validateField('query', 'keyword', { min: 4, required: true }),
+    snController.searchSn
+)
 
 /**
  * POST /api/sn
@@ -32,6 +37,7 @@ router.get('/', validateField('query', 'keyword', { min: 4, required: true }), s
  * 新增服务器信息
  */
 router.post('/',
+    requirePermission('sn:check'),
     validateField('body', 'sn', { min: 4, required: true }),
     snController.addServer
 )
@@ -41,7 +47,10 @@ router.post('/',
  *
  * 检查 SN 是否唯一 (不存在即为 true)
  */
-router.get('/check-sn/:sn', snController.checkSnUnique)
+router.get('/check-sn/:sn',
+    requirePermission('sn:check'),
+    snController.checkSnUnique
+)
 
 /**
  * GET /api/sn/cpu2mb/:cpu
@@ -52,7 +61,10 @@ router.get('/check-sn/:sn', snController.checkSnUnique)
  *
  * 注意：必须定义在 GET /：sn 之前，否则 Express 会先匹配通配路由
  */
-router.get('/cpu2mb/:cpu', snController.getMbByCpu)
+router.get('/cpu2mb/:cpu',
+    requirePermission('sn:check'),
+    snController.getMbByCpu
+)
 
 /**
  * GET /api/sn/:sn
@@ -61,6 +73,9 @@ router.get('/cpu2mb/:cpu', snController.getMbByCpu)
  * 请求示例：
  *   /api/sn/R730-001
  */
-router.get('/:sn', snController.getSnDetail)
+router.get('/:sn',
+    requirePermission('sn:check'),
+    snController.getSnDetail
+)
 
 module.exports = router
