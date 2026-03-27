@@ -89,7 +89,14 @@ async function refresh(req, res, next) {
 
     const result = await authService.refreshAccessToken(refreshToken)
 
-    res.json(result)
+    const safeUser = result.user
+      ? { ...result.user, id: encodeId(result.user.id) }
+      : undefined
+
+    res.json({
+      accessToken: result.accessToken,
+      ...(safeUser && { user: safeUser })
+    })
 
   } catch (error) {
     next(error)

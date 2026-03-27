@@ -155,7 +155,10 @@ async function refreshAccessToken(refreshToken) {
 
   const newAccessToken = generateAccessToken(payload)
 
-  return { accessToken: newAccessToken }
+  return {
+    accessToken: newAccessToken,
+    user: payload
+  }
 }
 
 /**
