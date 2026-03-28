@@ -7,7 +7,10 @@
 
 const ROLE_PERMISSIONS = {
   // 管理员：通配，拥有所有权限
-  admin: ['*:*'],
+  admin: [
+    '*:*',
+    'user:manage'
+  ],
 
   // 普通用户：仅限查询类权限
   user: [

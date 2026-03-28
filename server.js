@@ -20,6 +20,9 @@ const hwRouter = require("./routes/hwRoutes")
 // 路由：统计数据 (Dashboard)
 const statsRouter = require("./routes/statsRoutes")
 
+// 路由：用户管理 (Admin Only)
+const userRouter = require("./routes/userRoutes")
+
 // 全局路由错误信息
 const { AppError } = require('./utils/errors')
 
@@ -73,6 +76,7 @@ app.use('/api/auth', authRoutes)
 app.use("/api/sn", authMiddleware, snRouter)
 app.use("/api/hw", authMiddleware, hwRouter)
 app.use("/api/stats", authMiddleware, statsRouter)
+app.use("/api/users", authMiddleware, userRouter)
 
 /* 全局错误处理中间件（必须放在所有路由之后）
 作用：统一捕获后端抛出的所有错误，并返回结构化的 JSON 给前端 */

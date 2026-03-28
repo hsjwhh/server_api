@@ -173,3 +173,38 @@ Authorization: Bearer {{accessToken}}
 ### 4.1 获取汇总统计、最近记录及 OS 分布
 GET {{baseUrl}}/api/stats/dashboard
 Authorization: Bearer {{accessToken}}
+
+
+###########################################################
+### 5. 用户管理 (User Management - Admin Only)
+###########################################################
+
+### 5.1 获取所有用户列表
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{accessToken}}
+
+### 5.2 创建新用户
+POST {{baseUrl}}/api/users
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "username": "testuser",
+  "password": "password123",
+  "role": "user"
+}
+
+### 5.3 更新用户信息 (需替换 ID)
+@userId = jR8eG9
+PUT {{baseUrl}}/api/users/{{userId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "role": "admin",
+  "status": 1
+}
+
+### 5.4 删除用户 (需替换 ID)
+DELETE {{baseUrl}}/api/users/{{userId}}
+Authorization: Bearer {{accessToken}}
