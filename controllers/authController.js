@@ -167,6 +167,9 @@ async function changePassword(req, res, next) {
     // 3. 更新密码（userService.updateUser 内部已包含加盐哈希处理）
     await userService.updateUser(Number(userId), { password: newPassword })
 
+    // 吊销该用户所有 refresh token，强制所有端重新登录
+    await authService.revokeAllUserTokens(Number(userId))
+
     res.json({ message: '密码修改成功' })
   } catch (error) {
     next(error)

@@ -176,8 +176,20 @@ async function logout(refreshToken) {
   }
 }
 
+/**
+ * 吊销指定用户的所有 refresh token
+ * 用于密码修改、账号异常等场景，强制所有端重新登录
+ */
+async function revokeAllUserTokens(userId) {
+  await query(
+    'UPDATE refresh_tokens SET revoked = 1, revoked_at = NOW() WHERE user_id = ? AND revoked = 0',
+    [userId]
+  )
+}
+
 module.exports = {
   login,
   refreshAccessToken,
-  logout
+  logout,
+  revokeAllUserTokens
 }
