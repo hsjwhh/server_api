@@ -54,6 +54,20 @@ async function findUserByUsername(username) {
 }
 
 /**
+ * 根据用户 ID 获取用户信息（包含密码哈希，用于校验旧密码）
+ */
+async function findUserByIdWithPassword(id) {
+    const sql = `
+        SELECT id, username, password_hash
+        FROM users
+        WHERE id = ?
+        LIMIT 1
+    `;
+    const results = await query(sql, [Number(id)]);
+    return results.length > 0 ? results[0] : null;
+}
+
+/**
  * 创建新用户
  */
 async function createUser(userData) {
@@ -122,6 +136,7 @@ async function deleteUser(id) {
 module.exports = {
     getAllUsers,
     findUserByUsername,
+    findUserByIdWithPassword,
     createUser,
     updateUser,
     deleteUser

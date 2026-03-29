@@ -34,6 +34,16 @@ Content-Type: {{contentType}}
 POST {{baseUrl}}/api/auth/logout
 Content-Type: {{contentType}}
 
+### 1.4 修改个人密码 (需 Token)
+POST {{baseUrl}}/api/auth/change-password
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "oldPassword": "password123",
+  "newPassword": "newpassword456"
+}
+
 
 ###########################################################
 ### 2. 硬件查询 (CPU & MB)

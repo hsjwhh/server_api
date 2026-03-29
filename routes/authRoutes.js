@@ -19,6 +19,7 @@ const router = express.Router()
 const rateLimit = require('express-rate-limit')
 
 const authController = require('../controllers/authController')
+const authMiddleware = require('../middleware/authMiddleware')
 
 /**
  * 限流配置
@@ -74,5 +75,12 @@ router.post('/refresh', refreshLimiter, authController.refresh)
  *   - 返回：{ message: '已登出' }
  */
 router.post('/logout', authController.logout)
+
+/**
+ * POST /api/auth/change-password
+ * 修改个人密码，需要 Token 鉴权
+ * 请求体：{ oldPassword, newPassword }
+ */
+router.post('/change-password', authMiddleware, authController.changePassword)
 
 module.exports = router

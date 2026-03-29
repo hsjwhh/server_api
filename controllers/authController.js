@@ -12,7 +12,9 @@
  */
 
 const authService = require('../services/authService')
+const userService = require('../services/userService')
 const { encodeId } = require('../utils/obfuscate')
+const bcrypt = require('bcryptjs')
 // Cookie 策略也统一从配置中心读取，避免控制器里出现环境判断分支。
 const config = require('../config')
 
@@ -128,8 +130,52 @@ async function logout(req, res, next) {
   }
 }
 
+/**
+ * 修改个人密码
+ * POST /api/auth/change-password
+ */
+async function changePassword(req, res, next) {
+  try {
+    const { oldPassword, newPassword } = req.body
+    const userId = req.user.id  // 由 authMiddleware 注入
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        code: 'PARAM_ERROR',
+        message: '旧密码和新密码不能为空'
+      })
+    }
+
+    // 1. 获取当前用户及密码哈希
+    const user = await userService.findUserByIdWithPassword(userId)
+    if (!user) {
+      return res.status(404).json({
+        code: 'USER_NOT_FOUND',
+        message: '用户不存在'
+      })
+    }
+
+    // 2. 校验旧密码
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash)
+    if (!isMatch) {
+      return res.status(400).json({
+        code: 'PWD_ERROR',
+        message: '旧密码不正确'
+      })
+    }
+
+    // 3. 更新密码（userService.updateUser 内部已包含加盐哈希处理）
+    await userService.updateUser(Number(userId), { password: newPassword })
+
+    res.json({ message: '密码修改成功' })
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   login,
   refresh,
-  logout
+  logout,
+  changePassword
 }
