@@ -30,7 +30,8 @@ const config = {
     jwtSecret: getRequired('JWT_SECRET'),
     jwtExpiresIn: getString('JWT_EXPIRES_IN', '15m'),
     jwtRefreshSecret: getRequired('JWT_REFRESH_SECRET'),
-    jwtRefreshExpiresIn: getString('JWT_REFRESH_EXPIRES_IN', '7d')
+    jwtRefreshExpiresIn: getString('JWT_REFRESH_EXPIRES_IN', '7d'),
+    maxConcurrentLogins: getNumber('MAX_CONCURRENT_LOGINS', 5)
   },
   cookie: {
     secure: getBoolean('COOKIE_SECURE', cookieSecureDefault),

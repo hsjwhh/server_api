@@ -91,7 +91,28 @@ async function login(username, password) {
   const accessToken = generateAccessToken(payload)
   const refreshToken = generateRefreshToken(payload)
 
-  // 5. 存储 refreshToken 到数据库
+  // 5. 限制并发登录数（防滥用，顶号逻辑）
+  if (config.auth.maxConcurrentLogins > 0) {
+    // 获取当前有效的 token（按过期时间正序排列，最老的在前）
+    const validTokens = await query(
+      'SELECT token FROM refresh_tokens WHERE user_id = ? AND revoked = 0 AND expires_at > NOW() ORDER BY expires_at ASC',
+      [user.id]
+    )
+
+    // 如果即将达到或超过阈值，则吊销多余的最老 token（+1 是因为当前即将新插入1条）
+    if (validTokens.length >= config.auth.maxConcurrentLogins) {
+      const overflowCount = validTokens.length - config.auth.maxConcurrentLogins + 1
+      const tokensToRevoke = validTokens.slice(0, overflowCount).map(t => t.token)
+      
+      const placeholders = tokensToRevoke.map(() => '?').join(',')
+      await query(
+        `UPDATE refresh_tokens SET revoked = 1, revoked_at = NOW() WHERE token IN (${placeholders})`,
+        tokensToRevoke
+      )
+    }
+  }
+
+  // 6. 存储 refreshToken 到数据库
   const expiresAt = getExpiresAt(config.auth.jwtRefreshExpiresIn)
   await query(
     'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
