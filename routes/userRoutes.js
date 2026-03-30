@@ -24,4 +24,13 @@ router.put('/:id', userController.editUser);
 // 4. 删除用户 (使用混淆 ID)
 router.delete('/:id', userController.removeUser);
 
+/**
+ * 用户的 Session 管理 (Admin Only)
+ */
+// 5. 查看特定用户的活跃会话
+router.get('/:id/sessions', userController.listUserSessions);
+
+// 6. 强行踢掉特定用户的某个会话
+router.delete('/:id/sessions/:sessionId', userController.revokeUserSession);
+
 module.exports = router;

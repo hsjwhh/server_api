@@ -239,9 +239,48 @@ async function revokeAllUserTokens(userId) {
   )
 }
 
+/**
+ * 获取用户的活跃 session 列表
+ */
+async function getUserSessions(userId) {
+  const rows = await query(
+    `SELECT id, ip_address, device_name, user_agent, created_at, expires_at, token
+     FROM refresh_tokens
+     WHERE user_id = ? AND revoked = 0 AND expires_at > NOW()
+     ORDER BY created_at DESC`,
+    [userId]
+  )
+  return rows
+}
+
+/**
+ * 吊销指定 session（校验归属，防止越权）
+ * @returns {boolean} 是否成功吊销
+ */
+async function revokeSession(sessionId, userId) {
+  const result = await query(
+    'UPDATE refresh_tokens SET revoked = 1, revoked_at = NOW() WHERE id = ? AND user_id = ? AND revoked = 0',
+    [sessionId, userId]
+  )
+  return result.affectedRows > 0
+}
+
+/**
+ * 吊销用户除当前 token 外的所有活跃 session
+ */
+async function revokeOtherSessions(userId, currentToken) {
+  await query(
+    'UPDATE refresh_tokens SET revoked = 1, revoked_at = NOW() WHERE user_id = ? AND token != ? AND revoked = 0',
+    [userId, currentToken]
+  )
+}
+
 module.exports = {
   login,
   refreshAccessToken,
   logout,
-  revokeAllUserTokens
+  revokeAllUserTokens,
+  getUserSessions,
+  revokeSession,
+  revokeOtherSessions
 }

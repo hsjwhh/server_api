@@ -185,9 +185,69 @@ async function changePassword(req, res, next) {
   }
 }
 
+/**
+ * GET /api/auth/sessions
+ * 查看自己的活跃 session 列表
+ */
+async function listMySessions(req, res, next) {
+  try {
+    const userId = req.user.id
+    const currentToken = req.cookies[REFRESH_TOKEN_COOKIE] || null
+
+    const sessions = await authService.getUserSessions(userId)
+
+    const result = sessions.map(s => ({
+      id: encodeId(s.id),
+      ipAddress: s.ip_address,
+      deviceName: s.device_name,
+      createdAt: s.created_at,
+      expiresAt: s.expires_at,
+      isCurrent: currentToken ? s.token === currentToken : false
+    }))
+
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * DELETE /api/auth/sessions/:id  — 吊销指定 session
+ * DELETE /api/auth/sessions      — 吊销所有其他 session（保留当前）
+ */
+async function revokeMySession(req, res, next) {
+  try {
+    const userId = req.user.id
+    const sessionHashId = req.params.id  // 可能为 undefined（吊销全部）
+
+    if (sessionHashId) {
+      // 吊销指定 session
+      const sessionId = decodeId(sessionHashId)
+      if (!sessionId) {
+        return res.status(400).json({ code: 'VALIDATION_ERROR', message: '无效的 session ID' })
+      }
+
+      const success = await authService.revokeSession(sessionId, userId)
+      if (!success) {
+        return res.status(404).json({ code: 'SESSION_NOT_FOUND', message: '未找到该 session 或无权操作' })
+      }
+    } else {
+      // 吊销所有其他 session，保留当前
+      const currentToken = req.cookies[REFRESH_TOKEN_COOKIE] || null
+      await authService.revokeOtherSessions(userId, currentToken)
+    }
+
+    res.json({ message: '成功吊销指定会话' })
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   login,
   refresh,
   logout,
-  changePassword
+  changePassword,
+  listMySessions,
+  revokeMySession
 }

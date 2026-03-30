@@ -5,6 +5,7 @@
  */
 
 const userService = require('../services/userService');
+const authService = require('../services/authService');
 const { encodeId, decodeId } = require('../utils/obfuscate');
 
 // 获取所有用户
@@ -137,5 +138,62 @@ exports.removeUser = async (req, res) => {
             code: 'SERVER_ERROR',
             message: '删除用户失败' 
         });
+    }
+};
+
+/**
+ * GET /api/users/:id/sessions (Admin Only)
+ * 管理员查看特定用户的活跃会话
+ */
+exports.listUserSessions = async (req, res) => {
+    const userHashId = req.params.id;
+    const userId = decodeId(userHashId);
+
+    if (!userId) {
+        return res.status(400).json({ code: 'VALIDATION_ERROR', message: '无效的用户 ID' });
+    }
+
+    try {
+        const sessions = await authService.getUserSessions(userId);
+        
+        const result = sessions.map(s => ({
+            id: encodeId(s.id),
+            ipAddress: s.ip_address,
+            deviceName: s.device_name,
+            createdAt: s.created_at,
+            expiresAt: s.expires_at
+        }));
+        
+        res.json(result);
+    } catch (err) {
+        console.error('listUserSessions error:', err);
+        res.status(500).json({ code: 'SERVER_ERROR', message: '获取用户会话列表失败' });
+    }
+};
+
+/**
+ * DELETE /api/users/:id/sessions/:sessionId (Admin Only)
+ * 管理员强行踢掉特定用户的某个会话
+ */
+exports.revokeUserSession = async (req, res) => {
+    const userHashId = req.params.id;
+    const sessionHashId = req.params.sessionId;
+
+    const userId = decodeId(userHashId);
+    const sessionId = decodeId(sessionHashId);
+
+    if (!userId || !sessionId) {
+        return res.status(400).json({ code: 'VALIDATION_ERROR', message: '无效的 ID' });
+    }
+
+    try {
+        const success = await authService.revokeSession(sessionId, userId);
+        if (!success) {
+            return res.status(404).json({ code: 'SESSION_NOT_FOUND', message: '未找到会话或无法吊销' });
+        }
+        res.json({ message: '会话已成功吊销' });
+    } catch (err) {
+        console.error('revokeUserSession error:', err);
+        res.status(500).json({ code: 'SERVER_ERROR', message: '吊销用户会话失败' });
     }
 };

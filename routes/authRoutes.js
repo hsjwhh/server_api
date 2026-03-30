@@ -83,4 +83,16 @@ router.post('/logout', authController.logout)
  */
 router.post('/change-password', authMiddleware, authController.changePassword)
 
+/**
+ * Session 管理
+ */
+// 1. 查看自己的活跃会话列表
+router.get('/sessions', authMiddleware, authController.listMySessions)
+
+// 2. 吊销所有其他会话（保留当前）
+router.delete('/sessions', authMiddleware, authController.revokeMySession)
+
+// 3. 吊销指定会话
+router.delete('/sessions/:id', authMiddleware, authController.revokeMySession)
+
 module.exports = router
