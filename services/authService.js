@@ -29,6 +29,34 @@ const config = require('../config')
  * ================================
  */
 
+/**
+ * 从 User-Agent 字符串解析简短设备描述
+ * 例如：'Chrome 120 / Windows' 或 'Safari / iPhone'
+ */
+function parseDeviceName(ua) {
+  if (!ua) return '未知设备'
+
+  let browser = '未知浏览器'
+  let os = '未知系统'
+
+  // 浏览器识别（顺序重要：Edge/OPR 需在 Chrome 前判断）
+  if (/Edg\//.test(ua))          browser = 'Edge'
+  else if (/OPR\//.test(ua))     browser = 'Opera'
+  else if (/Chrome\//.test(ua))  browser = 'Chrome'
+  else if (/Firefox\//.test(ua)) browser = 'Firefox'
+  else if (/Safari\//.test(ua))  browser = 'Safari'
+
+  // 操作系统识别
+  if (/Windows/.test(ua))      os = 'Windows'
+  else if (/iPhone/.test(ua))  os = 'iPhone'
+  else if (/iPad/.test(ua))    os = 'iPad'
+  else if (/Android/.test(ua)) os = 'Android'
+  else if (/Mac OS/.test(ua))  os = 'macOS'
+  else if (/Linux/.test(ua))   os = 'Linux'
+
+  return `${browser} / ${os}`
+}
+
 function generateAccessToken(payload) {
   return jwt.sign(payload, config.auth.jwtSecret, {
     expiresIn: config.auth.jwtExpiresIn
@@ -65,7 +93,7 @@ function getExpiresAt(expiresIn) {
 /**
  * 登录逻辑
  */
-async function login(username, password) {
+async function login(username, password, deviceInfo = {}) {
   // 1. 从数据库查询用户
   const user = await userService.findUserByUsername(username)
 
@@ -114,9 +142,12 @@ async function login(username, password) {
 
   // 6. 存储 refreshToken 到数据库
   const expiresAt = getExpiresAt(config.auth.jwtRefreshExpiresIn)
+  const { ipAddress = null, userAgent = null } = deviceInfo
+  const deviceName = parseDeviceName(userAgent)
+
   await query(
-    'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
-    [user.id, refreshToken, expiresAt]
+    'INSERT INTO refresh_tokens (user_id, token, expires_at, ip_address, user_agent, device_name) VALUES (?, ?, ?, ?, ?, ?)',
+    [user.id, refreshToken, expiresAt, ipAddress, userAgent, deviceName]
   )
 
   // 非阻塞清理：删除当前用户的过期和已吊销 token，不影响登录主流程

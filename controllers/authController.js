@@ -47,7 +47,16 @@ async function login(req, res, next) {
   try {
     const { username, password } = req.body
 
-    const result = await authService.login(username, password)
+    // 提取客户端 IP（优先读取代理头）
+    const ipAddress = (
+      req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+      req.headers['x-real-ip'] ||
+      req.socket?.remoteAddress ||
+      null
+    )
+    const userAgent = req.headers['user-agent'] || null
+
+    const result = await authService.login(username, password, { ipAddress, userAgent })
 
     // refreshToken → HttpOnly Cookie（JS 不可见）
     res.cookie(REFRESH_TOKEN_COOKIE, result.refreshToken, COOKIE_OPTIONS)
