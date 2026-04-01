@@ -15,7 +15,9 @@ const ROLE_PERMISSIONS = {
     'server:read',
     'cpu:read',
     'mb:read',
-    'sn:check'
+    'sn:check',
+    'case:read',
+    'case:write'
   ]
 }
 
