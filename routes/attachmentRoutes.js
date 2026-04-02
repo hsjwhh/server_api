@@ -23,8 +23,8 @@ router.post(
   attachmentController.uploadAttachment
 )
 
-// 代理读取图片（通配路径匹配 object_key）
-router.get('/img/*', attachmentController.serveAttachment)
+// 代理读取图片（通配路径匹配 object_key，Express 5 需使用命名通配符）
+router.get('/img/*path', attachmentController.serveAttachment)
 
 // 查询附件列表
 router.get('/', requirePermission('attachment:read'), attachmentController.listAttachments)

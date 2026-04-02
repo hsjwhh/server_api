@@ -79,8 +79,11 @@ exports.uploadAttachment = async (req, res, next) => {
  */
 exports.serveAttachment = async (req, res, next) => {
   try {
-    // 从路径中提取 object_key（去掉 /api/attachments/img/ 前缀）
-    const objectKey = req.params[0]
+    // 从路径中提取 object_key（Express 5 的 *path 会解析为数组，需重新拼接）
+    let objectKey = req.params.path
+    if (Array.isArray(objectKey)) {
+      objectKey = objectKey.join('/')
+    }
 
     if (!objectKey) {
       return res.status(400).json({ code: 'VALIDATION_ERROR', message: '缺少文件路径' })
