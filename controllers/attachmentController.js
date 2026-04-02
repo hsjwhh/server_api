@@ -5,6 +5,27 @@
 const attachmentService = require('../services/attachmentService')
 const { decodeId, encodeId } = require('../utils/obfuscate')
 
+function normalizeUploadedFilename(filename) {
+  if (!filename) {
+    return filename
+  }
+
+  // busboy/multer 在 multipart filename 场景下可能把 UTF-8 字节按 latin1 解读，形成乱码。
+  // 仅在可以稳定识别为这类乱码时再做纠正，避免破坏本来正常的文件名。
+  const hasLatin1Bytes = /[\u0080-\u00FF]/.test(filename)
+  if (!hasLatin1Bytes) {
+    return filename
+  }
+
+  const decoded = Buffer.from(filename, 'latin1').toString('utf8')
+  if (decoded.includes('\uFFFD')) {
+    return filename
+  }
+
+  const canRoundTrip = Buffer.from(decoded, 'utf8').toString('latin1') === filename
+  return canRoundTrip ? decoded : filename
+}
+
 /**
  * POST /api/attachments/upload
  * 接收文件，上传到 MinIO，存库
@@ -40,18 +61,20 @@ exports.uploadAttachment = async (req, res, next) => {
       }
     }
 
+    const originalName = normalizeUploadedFilename(req.file.originalname)
+
     // 上传到 MinIO
     const { objectKey, bucket, size } = await attachmentService.uploadToMinio(
       req.file.buffer,
       req.file.mimetype,
-      req.file.originalname
+      originalName
     )
 
     // 存库
     const attachment = await attachmentService.saveAttachment({
       objectKey,
       bucket,
-      originalName: req.file.originalname,
+      originalName,
       mimeType: req.file.mimetype,
       size,
       entityType: entity_type || null,
@@ -79,10 +102,12 @@ exports.uploadAttachment = async (req, res, next) => {
  */
 exports.serveAttachment = async (req, res, next) => {
   try {
-    // 从路径中提取 object_key（Express 5 的 *path 会解析为数组，需重新拼接）
-    let objectKey = req.params.path
-    if (Array.isArray(objectKey)) {
-      objectKey = objectKey.join('/')
+    // 兼容 Express 5 命名通配符、旧版 unnamed splat 以及不同实现下的 string/array 形态。
+    const rawObjectKey = req.params.path ?? req.params[0]
+    let objectKey = Array.isArray(rawObjectKey) ? rawObjectKey.join('/') : rawObjectKey
+
+    if (typeof objectKey === 'string') {
+      objectKey = objectKey.replace(/^\/+/, '')
     }
 
     if (!objectKey) {

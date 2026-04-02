@@ -28,6 +28,7 @@ const caseRouter = require('./routes/caseRoutes')
 
 // 路由：附件管理
 const attachmentRouter = require('./routes/attachmentRoutes')
+const attachmentController = require('./controllers/attachmentController')
 
 // 全局路由错误信息
 const { AppError } = require('./utils/errors')
@@ -67,6 +68,9 @@ app.use(express.json())
  *   POST /api/auth/logout
  */
 app.use('/api/auth', authRoutes)
+
+// 附件图片读取给前端 <img src> 使用，不要求 Authorization 头。
+app.get(['/api/attachments/img/*path', '/api/attachments/img/{*path}'], attachmentController.serveAttachment)
 
 /**
  * SN/HW/Stats 查询路由（需要登录）
@@ -126,4 +130,3 @@ app.listen(PORT, () => {
   console.log(`  ✅ API running on port ${PORT}`)
   console.log(`====================================\n`)
 })
-
