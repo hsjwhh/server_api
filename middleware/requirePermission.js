@@ -17,7 +17,9 @@ const ROLE_PERMISSIONS = {
     'mb:read',
     'sn:check',
     'case:read',
-    'case:write'
+    'case:write',
+    'attachment:read',
+    'attachment:upload'
   ]
 }
 

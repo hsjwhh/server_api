@@ -51,6 +51,13 @@ const config = {
     waitForConnections: true,
     queueLimit: getNumber('DB_QUEUE_LIMIT', 0),
     connectionLimit: getNumber('DB_CONNECTION_LIMIT', 10)
+  },
+  minio: {
+    endpoint: getRequired('MINIO_ENDPOINT'),
+    accessKey: getRequired('MINIO_ACCESS_KEY'),
+    secretKey: getRequired('MINIO_SECRET_KEY'),
+    bucket: getRequired('MINIO_BUCKET'),
+    region: getString('MINIO_REGION', 'us-east-1')
   }
 }
 
