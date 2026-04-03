@@ -5,6 +5,7 @@
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3')
 const { randomUUID } = require('crypto')
+const sharp = require('sharp')
 const { query } = require('../db')
 const config = require('../config')
 
@@ -34,6 +35,33 @@ function getExtFromMime(mimeType) {
 }
 
 /**
+ * 尝试将图片转换为 WebP 格式
+ * 只有当转换后的体积更小时才使用 WebP
+ */
+async function tryConvertToWebp(buffer, mimeType) {
+  // webp 直接跳过
+  if (mimeType === 'image/webp') {
+    return { buffer, mimeType, converted: false }
+  }
+
+  try {
+    const webpBuffer = await sharp(buffer)
+      .webp({ quality: 85 })
+      .toBuffer()
+
+    // 对比大小，只有转换后更小才使用
+    if (webpBuffer.length < buffer.length) {
+      return { buffer: webpBuffer, mimeType: 'image/webp', converted: true }
+    }
+  } catch (err) {
+    // 转换失败（如不支持的格式或非图片），静默回退原文件
+    console.warn('[attachment] WebP 转换失败，使用原文件:', err.message)
+  }
+
+  return { buffer, mimeType, converted: false }
+}
+
+/**
  * 生成对象路径：images/YYYY/MM/DD/<uuid>.<ext>
  */
 function generateObjectKey(mimeType) {
@@ -54,17 +82,21 @@ function generateObjectKey(mimeType) {
  * @returns {{ objectKey, bucket, size }}
  */
 async function uploadToMinio(fileBuffer, mimeType, originalName) {
-  const objectKey = generateObjectKey(mimeType)
+  // 尝试 WebP 转换并对比大小
+  const { buffer: finalBuffer, mimeType: finalMimeType } = await tryConvertToWebp(fileBuffer, mimeType)
+
+  // 注意：这里的扩展名会根据 finalMimeType 自动推导为 .webp（如果转换成功）
+  const objectKey = generateObjectKey(finalMimeType)
   const bucket = config.minio.bucket
 
   await s3.send(new PutObjectCommand({
     Bucket: bucket,
     Key: objectKey,
-    Body: fileBuffer,
-    ContentType: mimeType
+    Body: finalBuffer,
+    ContentType: finalMimeType
   }))
 
-  return { objectKey, bucket, size: fileBuffer.length }
+  return { objectKey, bucket, size: finalBuffer.length }
 }
 
 /**
