@@ -10,20 +10,10 @@ function normalizeUploadedFilename(filename) {
     return filename
   }
 
-  // busboy/multer 在 multipart filename 场景下可能把 UTF-8 字节按 latin1 解读，形成乱码。
-  // 仅在可以稳定识别为这类乱码时再做纠正，避免破坏本来正常的文件名。
-  const hasLatin1Bytes = /[\u0080-\u00FF]/.test(filename)
-  if (!hasLatin1Bytes) {
-    return filename
-  }
-
-  const decoded = Buffer.from(filename, 'latin1').toString('utf8')
-  if (decoded.includes('\uFFFD')) {
-    return filename
-  }
-
-  const canRoundTrip = Buffer.from(decoded, 'utf8').toString('latin1') === filename
-  return canRoundTrip ? decoded : filename
+  // Node.js/Multer 规范：Header 默认被解析为 latin1。
+  // 通过 Buffer 将错认的 latin1 二进制流强行重铸为 utf8，彻底修复中文乱码。
+  // 纯英文/数字名称在此转换下完全无损。
+  return Buffer.from(filename, 'latin1').toString('utf8')
 }
 
 /**
