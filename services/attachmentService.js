@@ -29,6 +29,10 @@ function getExtFromMime(mimeType) {
     'image/png':  'png',
     'image/webp': 'webp',
     'image/gif':  'gif',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
+    'image/heic-sequence': 'heic',
+    'image/heif-sequence': 'heif',
     'application/pdf': 'pdf'
   }
   return map[mimeType] || 'bin'
@@ -79,7 +83,7 @@ function generateObjectKey(mimeType) {
  * @param {Buffer} fileBuffer - 文件内容
  * @param {string} mimeType - MIME 类型
  * @param {string} originalName - 原始文件名
- * @returns {{ objectKey, bucket, size }}
+ * @returns {{ objectKey, bucket, size, mimeType }}
  */
 async function uploadToMinio(fileBuffer, mimeType, originalName) {
   // 尝试 WebP 转换并对比大小
@@ -96,7 +100,7 @@ async function uploadToMinio(fileBuffer, mimeType, originalName) {
     ContentType: finalMimeType
   }))
 
-  return { objectKey, bucket, size: finalBuffer.length }
+  return { objectKey, bucket, size: finalBuffer.length, mimeType: finalMimeType }
 }
 
 /**

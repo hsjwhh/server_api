@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 新增 SN 唯一性检查接口 (`GET /api/sn/check-sn/:sn`)，支持前端实时校验。
 - 新增 CPU 插入 (`POST /api/hw/cpu`) 与更新 (`PUT /api/hw/cpu/:id`) 接口。
 - 新增主板插入 (`POST /api/hw/mb`) 与更新 (`PUT /api/hw/mb/:id`) 接口。
+- 新增 HEIC/HEIF 图片上传支持，允许附件上传链路尝试转换为 WebP 后再入库存储。
 
 ### Changed
 - **认证增强**：将 Refresh Token 存储从内存迁移至数据库 (`refresh_tokens` 表)，支持服务重启后的会话保持。
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Docker 兼容性修复**：移除 `server.js` 中的本地监听限制，恢复默认监听以确保 Docker 容器内外连接正常。
+- 修复附件图片压缩转换后的 `mime_type` 落库错误，数据库与 MinIO 实际存储格式保持一致。
 
 ### Security
 - 引入 `hashids` 库，对所有对外暴露的数字 ID（CPU、主板、SN详情、用户信息）进行混淆处理，防止 ID 遍历攻击。

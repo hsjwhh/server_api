@@ -28,7 +28,17 @@ exports.uploadAttachment = async (req, res, next) => {
       return res.status(400).json({ code: 'VALIDATION_REQUIRED', message: '未收到文件' })
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/heic',
+      'image/heif',
+      'image/heic-sequence',
+      'image/heif-sequence',
+      'application/pdf'
+    ]
     if (!allowedTypes.includes(req.file.mimetype)) {
       return res.status(400).json({
         code: 'VALIDATION_ERROR',
@@ -54,7 +64,7 @@ exports.uploadAttachment = async (req, res, next) => {
     const originalName = normalizeUploadedFilename(req.file.originalname)
 
     // 上传到 MinIO
-    const { objectKey, bucket, size } = await attachmentService.uploadToMinio(
+    const { objectKey, bucket, size, mimeType: storedMimeType } = await attachmentService.uploadToMinio(
       req.file.buffer,
       req.file.mimetype,
       originalName
@@ -65,7 +75,7 @@ exports.uploadAttachment = async (req, res, next) => {
       objectKey,
       bucket,
       originalName,
-      mimeType: req.file.mimetype,
+      mimeType: storedMimeType,
       size,
       entityType: entity_type || null,
       entityId,
