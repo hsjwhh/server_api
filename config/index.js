@@ -24,7 +24,10 @@ const config = {
     nodeEnv,
     port: getNumber('PORT', 3000),
     frontendUrl,
-    hashidsSalt: getString('HASHIDS_SALT', 'default-salt-please-change-it')
+    hashidsSalt: getString('HASHIDS_SALT', 'default-salt-please-change-it'),
+    // 新增：支持配置 trust proxy
+    // 可选值：true (信任所有), 1 (信任第一层), 或具体的 IP
+    trustProxy: process.env.TRUST_PROXY === 'true' ? true : (process.env.TRUST_PROXY || false)
   },
   auth: {
     jwtSecret: getRequired('JWT_SECRET'),

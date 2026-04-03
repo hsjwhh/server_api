@@ -36,6 +36,12 @@ const { AppError } = require('./utils/errors')
 // 创建 Express 应用实例
 const app = express()
 
+// 信任代理设置（必须在路由注册之前）
+// 解决 express-rate-limit 无法获取真实 IP 的警告问题
+if (config.app.trustProxy) {
+  app.set('trust proxy', config.app.trustProxy)
+}
+
 /**
  * 全局 CORS 配置
  * 这里改为读取配置中心维护的白名单数组：
@@ -55,9 +61,10 @@ app.use(cookieParser())
 
 /**
  * 解析 JSON 请求体
- * 例如：req.body = { username: 'xxx', password: 'yyy' }
+ * 增加限制到 10mb 以支持较大的数据提交
  */
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
 /**
  * 登录相关路由（无需鉴权）
