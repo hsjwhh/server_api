@@ -4,6 +4,7 @@
 
 const attachmentService = require('../services/attachmentService')
 const { decodeId, encodeId } = require('../utils/obfuscate')
+const sharp = require('sharp')
 
 function normalizeUploadedFilename(filename) {
   if (!filename) {
@@ -116,15 +117,43 @@ exports.serveAttachment = async (req, res, next) => {
 
     const { stream, contentType, contentLength } = await attachmentService.getFromMinio(objectKey)
 
-    // 设置响应头
-    if (contentType) res.setHeader('Content-Type', contentType)
-    if (contentLength) res.setHeader('Content-Length', contentLength)
+    // 1. 解析缩放参数
+    let w = parseInt(req.query.w, 10)
+    let h = parseInt(req.query.h, 10)
 
-    // 缓存 1 天
+    // 2. 安全防护：强制限制最大宽高为 800，防止恶意参数引发 OOM
+    const MAX_DIMENSION = 800
+    if (!isNaN(w)) w = Math.min(w, MAX_DIMENSION)
+    if (!isNaN(h)) h = Math.min(h, MAX_DIMENSION)
+
+    const isImage = contentType && contentType.startsWith('image/')
+    const needsResize = (!isNaN(w) || !isNaN(h)) && isImage
+
+    // 3. 通用响应头
+    if (contentType) res.setHeader('Content-Type', contentType)
     res.setHeader('Cache-Control', 'public, max-age=86400')
 
-    // pipe 流到响应
-    stream.pipe(res)
+    // 4. 管道分发
+    if (needsResize) {
+      // 动态缩略图模式（由于体积改变，不返回 Content-Length，Express 自动使用 chunked）
+      const transform = sharp().resize({
+        width: isNaN(w) ? undefined : w,
+        height: isNaN(h) ? undefined : h,
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+
+      transform.on('error', (err) => {
+        console.error('[attachment] sharp resize error:', err)
+        if (!res.headersSent) res.status(500).end()
+      })
+
+      stream.pipe(transform).pipe(res)
+    } else {
+      // 原图或非图片模式：原样输出
+      if (contentLength) res.setHeader('Content-Length', contentLength)
+      stream.pipe(res)
+    }
 
   } catch (err) {
     // MinIO 找不到文件
