@@ -50,6 +50,7 @@ async function tryConvertToWebp(buffer, mimeType) {
 
   try {
     const webpBuffer = await sharp(buffer)
+      .rotate() // 关键修复：强制处理 EXIF 旋转并拍平 Tiled 像素块，解决拼图乱码问题
       .webp({ quality: 85 })
       .toBuffer()
 

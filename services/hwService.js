@@ -11,7 +11,7 @@ const { query } = require("../db");
  * @param {string} keyword - CPU 简称关键词
  * @param {string|number} cores - 核心数
  */
-exports.getCpuName = async (keyword, cores) => {
+exports.getCpuName = async (keyword, cores, generation, base_freq) => {
     let sql = "SELECT * FROM cpu_info WHERE 1=1";
     const params = [];
 
@@ -27,7 +27,19 @@ exports.getCpuName = async (keyword, cores) => {
         params.push(cores);
     }
 
-    // 默认按简称排序，限制返回 50 条（按核心数搜时可能较多）
+    // 3. 代次精确过滤
+    if (generation) {
+        sql += " AND generation = ?";
+        params.push(generation);
+    }
+
+    // 4. 基础频率模糊匹配 (数据库存的是 "3.8 GHz" 字符串)
+    if (base_freq) {
+        sql += " AND base_freq LIKE ?";
+        params.push(`%${base_freq}%`);
+    }
+
+    // 默认按简称排序，限制返回 50 条
     sql += " ORDER BY cpu_short_name ASC LIMIT 50";
 
     return await query(sql, params);

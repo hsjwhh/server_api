@@ -13,19 +13,19 @@ const { encodeId, decodeId } = require("../utils/obfuscate");
 // CPU 搜索（自动补全）
 // 支持 ?keyword=xxx & cores=yyy
 exports.searchCpu = async (req, res) => {
-    // 获取关键词和核心数
-    const { keyword, cores } = req.query;
+    // 获取关键词、核心数、代次、基础频率
+    const { keyword, cores, generation, base_freq } = req.query;
 
-    // 业务基础校验：不能查全表，必须至少提供 keyword 或 cores 之一
-    if (!keyword && !cores) {
+    // 业务基础校验：不能查全表，必须至少提供一个条件
+    if (!keyword && !cores && !generation && !base_freq) {
         return res.status(400).json({
-            message: "请至少输入 CPU 型号关键词或核心数"
+            message: "请提供搜索条件 (型号、核心数、代次或频率)"
         });
     }
 
     try {
         // 调用 Service
-        const list = await hwService.getCpuName(keyword, cores);
+        const list = await hwService.getCpuName(keyword, cores, generation, base_freq);
 
         // 如果结果集为空
         if (!list || list.length === 0) {

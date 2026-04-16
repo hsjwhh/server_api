@@ -136,12 +136,14 @@ exports.serveAttachment = async (req, res, next) => {
     // 4. 管道分发
     if (needsResize) {
       // 动态缩略图模式（由于体积改变，不返回 Content-Length，Express 自动使用 chunked）
-      const transform = sharp().resize({
-        width: isNaN(w) ? undefined : w,
-        height: isNaN(h) ? undefined : h,
-        fit: 'inside',
-        withoutEnlargement: true
-      })
+      const transform = sharp()
+        .rotate() // 关键修复：解决缩略图解码时的拼图乱码问题
+        .resize({
+          width: isNaN(w) ? undefined : w,
+          height: isNaN(h) ? undefined : h,
+          fit: 'inside',
+          withoutEnlargement: true
+        })
 
       transform.on('error', (err) => {
         console.error('[attachment] sharp resize error:', err)
