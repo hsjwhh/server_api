@@ -53,8 +53,24 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/hw/cpu?keyword=Gold&cores=16
 Authorization: Bearer {{accessToken}}
 
+### 2.1b 组合搜索: 代次 + 核心数
+GET {{baseUrl}}/api/hw/cpu?generation=3rd Gen&cores=32
+Authorization: Bearer {{accessToken}}
+
+### 2.1c 组合搜索: 代次 + 频率
+GET {{baseUrl}}/api/hw/cpu?generation=Xeon 6&base_freq=2.4
+Authorization: Bearer {{accessToken}}
+
 ### 2.2 仅搜索型号 (不少于 4 位)
 GET {{baseUrl}}/api/hw/cpu?keyword=Epyc
+Authorization: Bearer {{accessToken}}
+
+### 2.2b 仅搜索代次 (Intel Xeon 6)
+GET {{baseUrl}}/api/hw/cpu?generation=Xeon 6
+Authorization: Bearer {{accessToken}}
+
+### 2.2c 仅搜索频率 (3.0 GHz)
+GET {{baseUrl}}/api/hw/cpu?base_freq=3.0
 Authorization: Bearer {{accessToken}}
 
 ### 2.3 仅搜索核心数 (16 核)
